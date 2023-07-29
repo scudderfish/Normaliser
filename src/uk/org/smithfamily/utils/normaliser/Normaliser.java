@@ -285,7 +285,7 @@ public class Normaliser
         Output.outputRTCalcs(ecuData, writer);
         Output.outputLogInfo(ecuData, writer);
         Output.outputGauges(ecuData, writer);
-//        Output.outputSettingGroups(ecuData,writer);
+        Output.outputSettingGroups(ecuData,writer);
         // outputGaugeDoc(writer);
 
        Output.outputOverrides(ecuData,writer);

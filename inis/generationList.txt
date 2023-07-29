@@ -1,2 +1,2 @@
-#msns-extra.29y.ini
-speeduino.ini
+speeduino202207.ini
+speeduino202306-dev.ini

@@ -88,7 +88,7 @@ public class Process
         line = StringUtils.replace(line, "timeNow", "timeNow()");
         line = StringUtils.replace(line,"array.","");
 
-        if (line.contains("ignLoad")) {
+        if (line.contains("fuelLoad")) {
             int x = 1;
         }
 
@@ -116,37 +116,82 @@ public class Process
         }
         else if (line.contains("scalar"))
         {
+            //                      0       1       2   3                                                       4               5
             //ignLoad           = scalar,   S16,    88, { bitStringValue( algorithmUnits , ignAlgorithm  ) }, ignLoadFeedBack, 0.000
-            String name = scalarM.group(1);
+            //dwell             = scalar,   U16,    90, "ms",                                                   0.001,          0.000
+            //                                                                3                             4                                                                                                          5
+            //idleLoad          = scalar,   U08,    38, { bitStringValue(idleUnits , iacAlgorithm  ) },    { (iacAlgorithm == 2 || iacAlgorithm == 3 || iacAlgorithm == 6 || iacMaxSteps <= 255) ? 1.000 : 2.000 }, 0.000
+
+            int eqPos = line.indexOf('=');
+
+            String name = line.substring(0,eqPos).trim();
+            String parmsStr = line.substring(eqPos+1).trim();
+            if(name.contains("idleLoad")) {
+                int x = 1;
+            }
+            List<String> parameters = Arrays.stream(parmsStr.split(","))
+                    .map(String::trim)
+                    .map(e-> e.replace("\"",""))
+                    .toList();
+
+            if(line.contains("{")) {
+                List<String> constructed = new ArrayList<>();
+                StringBuilder param= new StringBuilder();
+                int bc=0;
+                for(String p : parameters){
+                    if(!param.isEmpty()){
+                        param.append(", ");
+                    }
+                     param.append(p);
+                    if(p.contains("{")) {
+                        bc++;
+                    }
+
+                    if(p.contains("}")) {
+                        bc--;
+                    }
+                    if(bc==0) {
+                        constructed.add(param.toString().replace("{","(").replace("}",")"));
+
+                        param = new StringBuilder();
+                    }
+                }
+                parameters=constructed;
+
+
+
+            }
+            String classtype =parameters.get(0);
+            String dataType = parameters.get(1);
+
+            String offsetStr = parameters.get(2);
+            int offset = lastOffset;
+            try {
+                offset = Integer.parseInt(offsetStr);
+            }catch (NumberFormatException ignored){};
+            lastOffset=offset;
+            String units = parameters.get(3);
+            units=units.replace("{","").replace("}","");
+            String scale = parameters.get(4);
+            String numOffset = parameters.get(5);
             if (constantDefined(ecuData, name))
             {
                 name += "RT";
             }
-            String dataType = scalarM.group(2);
-            String offset = scalarM.group(3);
-            String units = scalarM.group(4);
-            String scale = scalarM.group(5);
-            String numOffset = scalarM.group(6);
-
-            if (safeDouble(scale) != 1)
-            {
                 ecuData.getRuntimeVars().put(name, "double");
-            }
-            else
-            {
-                ecuData.getRuntimeVars().put(name, "int");
-            }
             definition = Output
-                    .getScalar("ochBuffer", ecuData.getRuntimeVars().get(name), name, dataType, offset, scale, numOffset);
+                    .getScalar("ochBuffer", ecuData.getRuntimeVars().get(name), name, dataType, ""+offset, scale, numOffset);
             ecuData.setFingerprintSource(ecuData.getFingerprintSource() + definition);
             ecuData.getRuntime().add(definition);
             
-            int offsetOC = Integer.parseInt(offset);
+            int offsetOC = offset;
             double scaleOC = !StringUtils.isEmpty(scale) ? safeDouble(scale) : 0;
             double translateOC = !StringUtils.isEmpty(numOffset) ? safeDouble(numOffset) : 0;
             
             OutputChannel outputChannel = new OutputChannel(name, dataType, offsetOC, units, scaleOC, translateOC);
             ecuData.getOutputChannels().add(outputChannel);
+
+
         }
         else if (exprM.matches())
         {
@@ -396,7 +441,7 @@ public class Process
     static void processConstants(ECUData ecuData, String line)
     {
         line = removeComments(line);
-        if (StringUtils.isEmpty(line))
+        if (StringUtils.isEmpty(line)  || line.contains("unused"))
         {
             return;
         }
@@ -469,9 +514,13 @@ public class Process
         {
             //                      0       1           2       3               4       5       6       7           8
             //      iacCLminValue = scalar, U08,      61,       "% / Steps", idleRes,   0.0,   0.0, idleResMax,    0 ; Minimum and maximum duty cycles when using closed loop idle
-            String[] components = line.split("=");
-            String name = components[0].trim();
-            List<String> parameters = Arrays.stream(components[1].split(","))
+
+            int eqPos = line.indexOf('=');
+
+            String name = line.substring(0,eqPos).trim();
+            String parmsStr = line.substring(eqPos+1).trim();
+
+            List<String> parameters = Arrays.stream(parmsStr.split(","))
                     .map(String::trim)
                     .map(e-> e.replace("\"",""))
                     .toList();
