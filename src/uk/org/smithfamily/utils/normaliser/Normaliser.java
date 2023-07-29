@@ -309,6 +309,7 @@ public class Normaliser
         }
         catch (NoSuchAlgorithmException e)
         {
+            //noinspection CallToPrintStackTrace
             e.printStackTrace();
         }
 

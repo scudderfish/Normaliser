@@ -55,30 +55,6 @@ public class Process
 
     }
 
-    private static boolean isFloatingExpression(ECUData ecuData, String expression)
-    {
-        boolean result = expression.contains(".");
-        if (result)
-        {
-            return result;
-        }
-        for (String var : ecuData.getRuntimeVars().keySet())
-        {
-            if (expression.contains(var) && ecuData.getRuntimeVars().get(var).equals("double"))
-            {
-                result = true;
-            }
-        }
-        for (String var : ecuData.getEvalVars().keySet())
-        {
-            if (expression.contains(var) && ecuData.getEvalVars().get(var).equals("double"))
-            {
-                result = true;
-            }
-        }
-
-        return result;
-    }
 
     static void processExpr(ECUData ecuData, String line)
     {
@@ -88,12 +64,7 @@ public class Process
         line = StringUtils.replace(line, "timeNow", "timeNow()");
         line = StringUtils.replace(line,"array.","");
 
-        if (line.contains("fuelLoad")) {
-            int x = 1;
-        }
-
         Matcher bitsM = Patterns.bits.matcher(line);
-        Matcher scalarM = Patterns.scalar.matcher(line);
         Matcher exprM = Patterns.expr.matcher(line);
         Matcher ochGetCommandM = Patterns.ochGetCommand.matcher(line);
         Matcher ochBlockSizeM = Patterns.ochBlockSize.matcher(line);
@@ -126,9 +97,6 @@ public class Process
 
             String name = line.substring(0,eqPos).trim();
             String parmsStr = line.substring(eqPos+1).trim();
-            if(name.contains("idleLoad")) {
-                int x = 1;
-            }
             List<String> parameters = Arrays.stream(parmsStr.split(","))
                     .map(String::trim)
                     .map(e-> e.replace("\"",""))
@@ -161,14 +129,13 @@ public class Process
 
 
             }
-            String classtype =parameters.get(0);
             String dataType = parameters.get(1);
 
             String offsetStr = parameters.get(2);
             int offset = lastOffset;
             try {
                 offset = Integer.parseInt(offsetStr);
-            }catch (NumberFormatException ignored){};
+            }catch (NumberFormatException ignored){}
             lastOffset=offset;
             String units = parameters.get(3);
             units=units.replace("{","").replace("}","");
@@ -196,12 +163,6 @@ public class Process
         else if (exprM.matches())
         {
             String name = exprM.group(1);
-            if ("pwma_load".equals(name))
-            {
-                // Hook to hang a break point on
-                @SuppressWarnings("unused")
-                int x = 1;
-            }
             String expression = deBinary(exprM.group(2).trim());
             Matcher ternaryM = Patterns.ternary.matcher(expression);
             if (ternaryM.matches())
@@ -506,10 +467,6 @@ public class Process
         line = removeCurlyBrackets(line);
         Matcher bitsM = Patterns.bits.matcher(line);
         Matcher constantSimpleM = Patterns.constantSimple.matcher(line);
-        //Matcher constantArrayM = Patterns.constantArray.matcher(line);
-        if(line.contains("afrTable")) {
-            int x=1;
-        }
         if (line.contains("scalar"))
         {
             //                      0       1           2       3               4       5       6       7           8
@@ -532,7 +489,7 @@ public class Process
             int offset = lastOffset;
             try {
                 offset = Integer.parseInt(offsetStr);
-            }catch (NumberFormatException ignored){};
+            }catch (NumberFormatException ignored){}
             lastOffset=offset;
             String units = parameters.get(3);
             String scaleText = parameters.get(4);
@@ -586,7 +543,7 @@ public class Process
             if (!offsetStr.contains("[")) {
                 try {
                     offset = Integer.parseInt(offsetStr);
-                }catch (NumberFormatException ignored){};
+                }catch (NumberFormatException ignored){}
                 idx++;
             }
             lastOffset=offset;
@@ -702,14 +659,8 @@ public class Process
         if (line.contains("defaultValue"))
         {
             String statement;
-            if(line.contains("injAng")) {
-                int x=1;
-            }
             String[] definition = line.split("=")[1].split(",");
             String varName = definition[0].trim();
-            if(varName.equals("algorithmLimits")) {
-                int x = 1;
-            }
             if(ecuData.getConstantVars().containsKey(varName)) {
 
                 String varType = ecuData.getConstantVars().get(varName);
@@ -743,10 +694,6 @@ public class Process
         }
     }
 
-    static void processPcVariables(ECUData ecuData, String line)
-    {
-
-    }
 
     public static void processSettingGroups(ECUData ecuData, String line)
     {
