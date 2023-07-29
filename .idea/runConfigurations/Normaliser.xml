@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Normaliser" type="Application" factoryName="Application" activateToolWindowBeforeRun="false">
+    <option name="MAIN_CLASS_NAME" value="uk.org.smithfamily.utils.normaliser.Normaliser" />
+    <module name="Normaliser" />
+    <option name="PROGRAM_PARAMETERS" value="inis/generationList.txt $ProjectFileDir$/" />
+    <method v="2">
+      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_Remove generated code" />
+      <option name="MakeProject" enabled="true" />
+    </method>
+  </configuration>
+</component>
