@@ -65,7 +65,7 @@ public interface MSECUInterface
     
     public abstract List<SettingGroup> getSettingGroups();
 
-     default double arrayValue(int boardFuelOutputs, int pinLayout) {
+     default double arrayValue(double[] boardFuelOutputs, int pinLayout) {
         return 0;
      }
 

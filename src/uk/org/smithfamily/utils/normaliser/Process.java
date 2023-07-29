@@ -7,11 +7,13 @@ import uk.org.smithfamily.mslogger.ecuDef.SettingGroup;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 
 public class Process
 {
-    private static String currentMenuDialog = "";
+
+    private static int lastOffset;
 
     private static String deBinary(String group)
     {
@@ -84,6 +86,12 @@ public class Process
         line = removeComments(line);
 
         line = StringUtils.replace(line, "timeNow", "timeNow()");
+        line = StringUtils.replace(line,"array.","");
+
+        if (line.contains("ignLoad")) {
+            int x = 1;
+        }
+
         Matcher bitsM = Patterns.bits.matcher(line);
         Matcher scalarM = Patterns.scalar.matcher(line);
         Matcher exprM = Patterns.expr.matcher(line);
@@ -106,8 +114,9 @@ public class Process
             ecuData.getRuntime().add(definition);
             ecuData.getRuntimeVars().put(name, "int");
         }
-        else if (scalarM.matches())
+        else if (line.contains("scalar"))
         {
+            //ignLoad           = scalar,   S16,    88, { bitStringValue( algorithmUnits , ignAlgorithm  ) }, ignLoadFeedBack, 0.000
             String name = scalarM.group(1);
             if (constantDefined(ecuData, name))
             {
@@ -119,7 +128,7 @@ public class Process
             String scale = scalarM.group(5);
             String numOffset = scalarM.group(6);
 
-            if (Double.parseDouble(scale) != 1)
+            if (safeDouble(scale) != 1)
             {
                 ecuData.getRuntimeVars().put(name, "double");
             }
@@ -133,8 +142,8 @@ public class Process
             ecuData.getRuntime().add(definition);
             
             int offsetOC = Integer.parseInt(offset);
-            double scaleOC = !StringUtils.isEmpty(scale) ? Double.parseDouble(scale) : 0;
-            double translateOC = !StringUtils.isEmpty(numOffset) ? Double.parseDouble(numOffset) : 0;
+            double scaleOC = !StringUtils.isEmpty(scale) ? safeDouble(scale) : 0;
+            double translateOC = !StringUtils.isEmpty(numOffset) ? safeDouble(numOffset) : 0;
             
             OutputChannel outputChannel = new OutputChannel(name, dataType, offsetOC, units, scaleOC, translateOC);
             ecuData.getOutputChannels().add(outputChannel);
@@ -182,14 +191,7 @@ public class Process
 
             ecuData.getRuntime().add(definition);
             String dataType;
-            if (isFloatingExpression(ecuData, expression))
-            {
                 dataType = "double";
-            }
-            else
-            {
-                dataType = "int";
-            }
             ecuData.getEvalVars().put(name, dataType);
             OutputChannel outputChannel = new OutputChannel(name, dataType, -1, "", 1, 0);
             ecuData.getOutputChannels().add(outputChannel);
@@ -399,12 +401,6 @@ public class Process
             return;
         }
 
-        if (line.contains("DI_rpm"))
-        {
-            // Break point hook
-            @SuppressWarnings("unused")
-            int x = 1;
-        }
         if (line.contains("messageEnvelopeFormat"))
         {
             ecuData.setCRC32Protocol(line.contains("msEnvelope_1.0"));
@@ -464,28 +460,41 @@ public class Process
         // To allow for MS2GS27
         line = removeCurlyBrackets(line);
         Matcher bitsM = Patterns.bits.matcher(line);
-        Matcher constantM = Patterns.constantScalar.matcher(line);
         Matcher constantSimpleM = Patterns.constantSimple.matcher(line);
-        Matcher constantArrayM = Patterns.constantArray.matcher(line);
-        if(line.contains("iacCLminValue")) {
+        //Matcher constantArrayM = Patterns.constantArray.matcher(line);
+        if(line.contains("afrTable")) {
             int x=1;
         }
-        if (constantM.matches())
+        if (line.contains("scalar"))
         {
-            String name = constantM.group(1);
-            String classtype = constantM.group(2);
-            String type = constantM.group(3);
-            int offset = Integer.parseInt(constantM.group(4).trim());
-            String units = constantM.group(5);
-            String scaleText = constantM.group(6);
-            String translateText = constantM.group(7);
-            String lowText = constantM.group(8);
-            String highText = constantM.group(9);
-            String digitsText = constantM.group(10);
-            double scale = !StringUtils.isEmpty(scaleText) ? Double.parseDouble(scaleText) : 0;
-            double translate = !StringUtils.isEmpty(translateText) ? Double.parseDouble(translateText) : 0;
+            //                      0       1           2       3               4       5       6       7           8
+            //      iacCLminValue = scalar, U08,      61,       "% / Steps", idleRes,   0.0,   0.0, idleResMax,    0 ; Minimum and maximum duty cycles when using closed loop idle
+            String[] components = line.split("=");
+            String name = components[0].trim();
+            List<String> parameters = Arrays.stream(components[1].split(","))
+                    .map(String::trim)
+                    .map(e-> e.replace("\"",""))
+                    .toList();
 
-            int digits = !StringUtils.isEmpty(digitsText) ? (int) Double.parseDouble(digitsText) : 0;
+            String classtype =parameters.get(0);
+            String type = parameters.get(1);
+
+            String offsetStr = parameters.get(2);
+            int offset = lastOffset;
+            try {
+                offset = Integer.parseInt(offsetStr);
+            }catch (NumberFormatException ignored){};
+            lastOffset=offset;
+            String units = parameters.get(3);
+            String scaleText = parameters.get(4);
+            String translateText = parameters.get(5);
+            String lowText = parameters.size() > 6 ? parameters.get(6) : "";
+            String highText = parameters.size() > 7 ? parameters.get(7) :"";
+            String digitsText = parameters.size() > 8 ? parameters.get(8):"";
+            double scale = !StringUtils.isEmpty(scaleText) ? safeDouble(scaleText) : 0;
+            double translate = !StringUtils.isEmpty(translateText) ? safeDouble(translateText) : 0;
+
+            int digits = !StringUtils.isEmpty(digitsText) ? (int) safeDouble(digitsText) : 0;
 
             //noinspection SuspiciousMethodCalls
             if (!ecuData.getConstants().contains(name))
@@ -504,25 +513,47 @@ public class Process
                 ecuData.getConstants().add(c);
             }
         }
-        else if (constantArrayM.matches())
+        else if (line.contains("array"))
         {
+            //                  0       1       2       3   4   5 6   7   8   9
+            //algorithmLimits= array,   U16,   [8],   "", 1.0, 0, 0, 511, 0, noMsqSave
+            String[] components = line.split("=");
+            String name = components[0].trim();
+            List<String> parameters = Arrays.stream(components[1].split(","))
+                    .map(String::trim)
+                    .map(e-> e.replace("\"",""))
+                    .toList();
 
-            String name = constantArrayM.group(1);
-            String classtype = constantArrayM.group(2);
-            String type = constantArrayM.group(3);
-            int offset = Integer.parseInt(constantArrayM.group(4).trim());
-            String shape = constantArrayM.group(5);
-            String units = constantArrayM.group(6);
-            String scaleText = constantArrayM.group(7);
-            String translateText = constantArrayM.group(8);
-            String lowText = constantArrayM.group(9);
-            String highText = constantArrayM.group(10);
-            String digitsText = constantArrayM.group(11);
+            String classtype =parameters.get(0);
+            String type = parameters.get(1);
+
+
+
+
+            int idx = 2;
+            int offset = lastOffset;
+
+            String offsetStr = parameters.get(idx);
+            if (!offsetStr.contains("[")) {
+                try {
+                    offset = Integer.parseInt(offsetStr);
+                }catch (NumberFormatException ignored){};
+                idx++;
+            }
+            lastOffset=offset;
+
+            String shape = parameters.get(idx++);
+            String units = parameters.get(idx++);
+            String scaleText = parameters.get(idx++);
+            String translateText = parameters.get(idx++);
+            String lowText = parameters.get(idx++);
+            String highText = parameters.get(idx++);
+            String digitsText = parameters.size() > idx ? parameters.get(idx) :"";
             highText = highText.replace("{", "").replace("}", "");
-            double scale = !StringUtils.isEmpty(scaleText) ? Double.parseDouble(scaleText) : 0;
-            double translate = !StringUtils.isEmpty(translateText) ? Double.parseDouble(translateText) : 0;
+            double scale = !StringUtils.isEmpty(scaleText) ? safeDouble(scaleText) : 0;
+            double translate = !StringUtils.isEmpty(translateText) ? safeDouble(translateText) : 0;
 
-            int digits = !StringUtils.isEmpty(digitsText) ? (int) Double.parseDouble(digitsText) : 0;
+            int digits = !StringUtils.isEmpty(digitsText) ? (int) safeDouble(digitsText) : 0;
 
             //noinspection SuspiciousMethodCalls
             if (!ecuData.getConstants().contains(name))
@@ -547,8 +578,8 @@ public class Process
             String type = constantSimpleM.group(3);
             int offset = Integer.parseInt(constantSimpleM.group(4).trim());
             String units = constantSimpleM.group(5);
-            double scale = Double.parseDouble(constantSimpleM.group(6));
-            double translate = Double.parseDouble(constantSimpleM.group(7));
+            double scale = safeDouble(constantSimpleM.group(6));
+            double translate = safeDouble(constantSimpleM.group(7));
 
             Constant c = new Constant(ecuData.getCurrentPage(), name, classtype, type, offset, "", units, scale, translate, "0",
                     "0", 0);
@@ -569,7 +600,9 @@ public class Process
             String offset = bitsM.group(3);
             String start = bitsM.group(4);
             String end = bitsM.group(5);
-            
+            if(offset.trim().isEmpty()) {
+                offset="0";
+            }
             String strBitsValues = bitsM.group(7);
             
             String[] bitsValues = new String[]{};
@@ -589,6 +622,14 @@ public class Process
             String preproc = (processPreprocessor(ecuData, line));
             Constant c = new Constant(ecuData.getCurrentPage(), preproc, "", "PREPROC", 0, "", "", 0, 0, "0", "0", 0);
             ecuData.getConstants().add(c);
+        }
+    }
+
+    private static double safeDouble(String txt) {
+        try {
+            return Double.parseDouble(txt);
+        }catch(NumberFormatException e) {
+            return 0;
         }
     }
 
@@ -617,13 +658,25 @@ public class Process
             }
             String[] definition = line.split("=")[1].split(",");
             String varName = definition[0].trim();
+            if(varName.equals("algorithmLimits")) {
+                int x = 1;
+            }
             if(ecuData.getConstantVars().containsKey(varName)) {
 
                 String varType = ecuData.getConstantVars().get(varName);
                 statement= varName + " = ";
-                String value = definition[1];
+                String value = definition[1].trim();
+                
+                
+                
+                
+                
                 if(varType.contains("[]")){
-                    statement += "new "+varType+"{" + value.trim().replace(' ',',') + "};";
+
+                    String[] values = value.split("\\s+");
+                    
+
+                    statement += "new "+varType+"{" + String.join(",",values) + "};";
                 } else {
                     statement+= value +";";
                 }
@@ -641,7 +694,7 @@ public class Process
         }
     }
 
-    static void processPcVariables()
+    static void processPcVariables(ECUData ecuData, String line)
     {
 
     }

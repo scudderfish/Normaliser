@@ -214,31 +214,7 @@ public class Output {
         }
 
         writer.println(TAB + "public String[] flags = {" + StringUtils.join(flags, ",") + "};");
-        for (String name : ecuData.getFlags()) {
-            writer.println(TAB + "public boolean " + name + ";");
-        }
-        writer.println("//Defaults");
-        for (String d : ecuData.getDefaults()) {
-            writer.println(TAB + "public " + d);
-        }
-        Map<String, String> vars = new TreeMap<>();
-        vars.putAll(ecuData.getRuntimeVars());
-        vars.putAll(ecuData.getEvalVars());
-        for (String v : vars.keySet()) {
-            ecuData.getConstantVars().remove(v);
-        }
-        writer.println("//Variables");
-        for (String name : vars.keySet()) {
-            String type = getType(name, vars);
-            writer.println(TAB + "public " + type + " " + name + ";");
-        }
-        writer.println("\n//Constants");
-        for (String name : ecuData.getConstantVars().keySet()) {
-            if (!ecuData.getInitalisedConstants().contains(name.trim())) {
-                String type = getType(name, ecuData.getConstantVars());
-                writer.println(TAB + "public " + type + " " + name + ";");
-            }
-        }
+
         writer.println("\n");
         writer.println(TAB + "private String[] defaultGauges = {");
         boolean first = true;
@@ -377,7 +353,7 @@ public class Output {
                 } else {
                     def = getScalar("pageBuffer", ecuData.getConstantVars().get(name), name, c.getType(), String.valueOf(c.getOffset()), String.valueOf(c.getScale()), String.valueOf(c.getTranslate()));
                 }
-                writer.println(TAB + TAB + def);
+                if (pageNo > 0) {writer.println(TAB + TAB + def);}
             } else {
                 if (pageNo > 0) {
                     writer.println(TAB + TAB + name);
@@ -598,8 +574,8 @@ public class Output {
 
     }
 
-    private static void declare(Map<String,String> vars,PrintWriter writer,String comment){
-        writer.println(comment);
+    private static void declare(Map<String,String> vars,PrintWriter writer){
+        writer.println("//Vars");
         vars.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .forEach(e -> {
@@ -607,20 +583,18 @@ public class Output {
                 });
     }
     public static void declareVariables(ECUData ecuData, PrintWriter writer) {
-        declare(ecuData.getRuntimeVars(),writer,"//Runtime vars");
-        declare(ecuData.getEvalVars(),writer,"//Eval vars");
-        declare(ecuData.getConstantVars(),writer,"// 'Constant' vars");
+
+        Map<String,String> allVars = new HashMap<>();
+        allVars.putAll(ecuData.getRuntimeVars());
+        allVars.putAll(ecuData.getEvalVars());
+        allVars.putAll(ecuData.getConstantVars());
+        declare(allVars,writer);
         writer.println("//Flags");
         ecuData.getFlags().forEach(e->{writer.println(TAB+"boolean "+e+";");});
     }
 
     public static void initDefaultValues(ECUData ecuData, PrintWriter writer) {
         writer.println("private void setDefaultValues() {");
-        int x = 1;
-        Map<String,String> types = new HashMap<>();
-        types.putAll(ecuData.getConstantVars());
-        types.putAll(ecuData.getRuntimeVars());
-        types.putAll(ecuData.getEvalVars());
 
         ecuData.getDefaults().forEach(e->{writer.println(TAB+TAB+e);});
 

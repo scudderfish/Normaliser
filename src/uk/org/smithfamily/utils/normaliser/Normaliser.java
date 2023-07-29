@@ -110,6 +110,9 @@ public class Normaliser
 //            line = new String(convertedBytes.array(), StandardCharsets.UTF_8);
 
 
+            if(line.contains("AUX")|| line.contains("Alias")) {
+                continue;
+            }
             if (line.startsWith("#include "))
             {
                 handleImport(line, f);
@@ -204,7 +207,7 @@ public class Normaliser
                 Process.processConstants(ecuData,line);
                 break;
             case PcVariables:
-                Process.processPcVariables();
+                Process.processConstants(ecuData,line);
                 break;
             case ConstantsExtensions:
                 Process.processConstantsExtensions(ecuData,line);
@@ -274,20 +277,20 @@ public class Normaliser
         Output.outputFlagsAndConstants(ecuData, writer);
         Output.outputOutputChannels(ecuData, writer);
 //        writer.println(TAB + "private final Map<String,Double> fields = new HashMap<>();");
-//        writer.println(TAB + ecuData.getQueryCommandStr());
-//        writer.println(TAB + ecuData.getSignatureDeclaration());
-//        writer.println(TAB + ecuData.getOchGetCommandStr());
-//        writer.println(TAB + ecuData.getOchBlockSizeStr());
-//        Output.outputRequiresPowerCycle(ecuData,writer);
-//        Output.outputRTCalcs(ecuData, writer);
-//        Output.outputLogInfo(ecuData, writer);
-//        Output.outputGauges(ecuData, writer);
+        writer.println(TAB + ecuData.getQueryCommandStr());
+        writer.println(TAB + ecuData.getSignatureDeclaration());
+        writer.println(TAB + ecuData.getOchGetCommandStr());
+        writer.println(TAB + ecuData.getOchBlockSizeStr());
+        Output.outputRequiresPowerCycle(ecuData,writer);
+        Output.outputRTCalcs(ecuData, writer);
+        Output.outputLogInfo(ecuData, writer);
+        Output.outputGauges(ecuData, writer);
 //        Output.outputSettingGroups(ecuData,writer);
         // outputGaugeDoc(writer);
 
        Output.outputOverrides(ecuData,writer);
-//        Output.outputLoadConstants(ecuData,writer);
-//        Output.outputGlobalVars(ecuData,writer);
+        Output.outputLoadConstants(ecuData,writer);
+        Output.outputGlobalVars(ecuData,writer);
         writer.println("\n}\n");
 
         writer.close();

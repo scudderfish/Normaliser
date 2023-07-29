@@ -45,7 +45,7 @@ public class Patterns
     /*
      * Constant
      */
-    static Pattern constantScalar      = Pattern.compile("\"\\s*(\\w*)\\s*=\\s*(scalar)\\s*,\\s*(.*?)\\s*,\\s*(\\d*)\\s*,\\s*\\\"(.*)\\\"\\s*,\\s*(.*?)\\s*,\\s*(.*?)\\s*,\\s*(.*?)\\s*,\\s*(.*?)\\s*,\\s*(.*?).*\"gm");
+    static Pattern constantScadlar      = Pattern.compile("\"\\s*(\\w*)\\s*=\\s*(scalar)\\s*,\\s*(.*?)\\s*,\\s*(\\d*)\\s*,\\s*\\\"(.*)\\\"\\s*,\\s*(.*?)\\s*,\\s*(.*?)\\s*,\\s*(.*?)\\s*,\\s*(.*?)\\s*,\\s*(.*?).*\"gm");
     static Pattern constantSimple      = Pattern.compile("\\s*(\\w*)\\s*=\\s*(scalar)\\s*,\\s*(.*?)\\s*,\\s*(\\d*)\\s*,\\s*\"(.*)\"\\s*,\\s*([-+]?\\d*\\.?\\d*)\\s*,\\s*([-+]?\\d*\\.?\\d*).*");
     static Pattern constantArray       = Pattern.compile("\\s*(\\w*)\\s*=\\s*(array)\\s*,\\s*(.*?)\\s*,\\s*(\\d*),\\s*(\\[.*?])\\s*,\\s*\"(.*?)\"\\s*,\\s*([-+]?\\d*\\.?\\d*)\\s*,\\s*([-+]?\\d*\\.?\\d*)\\s*,\\s*(.*?)\\s*,\\s*(.*?)\\s*,\\s*([-+]?\\d*\\.?\\d*)");
     static Pattern booleanConvert      = Pattern.compile("(.*?==\\s*\\d+)\\s*(\\).*?)");
