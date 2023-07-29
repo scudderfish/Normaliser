@@ -1,14 +1,16 @@
 package uk.org.smithfamily.utils.normaliser;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
-
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class Normaliser
 {
     enum Section
@@ -17,17 +19,13 @@ public class Normaliser
     }
 
     private static final String        TAB          = "    ";
-    private static ECUData             ecuData      = new ECUData();
-    private static Map<String, String> classList    = new TreeMap<String, String>();
+    private static final ECUData             ecuData      = new ECUData();
+    private static final Map<String, String> classList    = new TreeMap<>();
     private static Section             currentSection;
     private static String              className;
     private static File                outputDirectory;
 
 
-    /**
-     * @param args
-     * @throws FileNotFoundException
-     */
     public static void main(String[] args) throws IOException
     {
         File f = new File(args[0]);
@@ -78,13 +76,6 @@ public class Normaliser
         w.close();
     }
 
-    /**
-     * Initialise our stores to start a new class definition
-     * 
-     * @param filename
-     * @param line
-     * @throws IOException
-     */
     private static void preProcess(String directory, String filename) throws IOException
     {
         ecuData.setSignatureDeclaration("");
@@ -100,21 +91,25 @@ public class Normaliser
         process(f, false);
     }
 
-    /**
-     * Iterate over the file to read it
-     * 
-     * @param f
-     * @param subRead
-     * @throws IOException
-     */
     private static void process(File f, boolean subRead) throws IOException
     {
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f), "CP1252"));
 
         String line;
+//        CharsetEncoder encoder2 = Charset.forName("Windows-1252").newEncoder();
+//        CharsetEncoder encoder3 = StandardCharsets.UTF_8.newEncoder();
+//
 
         while ((line = br.readLine()) != null)
         {
+//            ByteBuffer conv1Bytes = encoder2.encode(CharBuffer.wrap(line.toCharArray()));
+//
+//            String retValue = new String(conv1Bytes.array(), Charset.forName("Windows-1252"));
+//
+//            ByteBuffer convertedBytes = encoder3.encode(CharBuffer.wrap(retValue.toCharArray()));
+//            line = new String(convertedBytes.array(), StandardCharsets.UTF_8);
+
+
             if (line.startsWith("#include "))
             {
                 handleImport(line, f);
@@ -209,28 +204,15 @@ public class Normaliser
                 Process.processConstants(ecuData,line);
                 break;
             case PcVariables:
-                Process.processPcVariables(ecuData,line);
+                Process.processPcVariables();
                 break;
             case ConstantsExtensions:
                 Process.processConstantsExtensions(ecuData,line);
                 break;
-            case Menu:
-                Process.processMenu(ecuData,line);
-                break;
-            case TableEditor:
-                Process.processTableEditor(ecuData,line);
-                break;
-            case CurveEditor:
-                Process.processCurveEditor(ecuData,line);
-                break;
-            case UserDefined:
-                Process.processUserDefined(ecuData,line);
-                break;
             case SettingGroups:
                 Process.processSettingGroups(ecuData,line);
-            case None:
-                break;
-            default:
+                case None:
+                default:
                 break;
             }
 
@@ -242,16 +224,9 @@ public class Normaliser
         }
     }
 
-    /**
-     * Process an included/imported file
-     * 
-     * @param line
-     * @param parentFile
-     * @throws IOException
-     */
     private static void handleImport(String line, File parentFile) throws IOException
     {
-        Pattern importFile = Pattern.compile(".*\\\"(.*)\\\"");
+        Pattern importFile = Pattern.compile(".*\"(.*)\"");
 
         Matcher importFileM = importFile.matcher(line);
         if (importFileM.matches())
@@ -271,7 +246,7 @@ public class Normaliser
         className = StringUtils.replace(className, " ", "_");
         className = StringUtils.replace(className, "-", "_");
         className = StringUtils.replace(className, "&", "_");
-        String classFile = "";
+        String classFile;
 
         classList.put(className, ecuData.getClassSignature());
         String directory = outputDirectory.getAbsolutePath() + File.separator + "gen_src/uk/org/smithfamily/mslogger/ecuDef/gen/";
@@ -282,7 +257,7 @@ public class Normaliser
         String fingerprint = getFingerprint();
         System.out.println(fingerprint + " : " + className);
 
-        Output.outputPackageAndIncludes(ecuData,writer);
+        Output.outputPackageAndIncludes(writer);
 
         writer.println("/*");
         writer.println("Fingerprint : " + fingerprint);
@@ -290,30 +265,29 @@ public class Normaliser
 
         writer.println("@SuppressWarnings(\"unused\")");
         writer.println("public class " + className + " implements MSECUInterface\n{");
-        Output.outputConstructor(ecuData,writer, className);
+        Output.declareVariables(ecuData,writer);
+
+        Output.outputConstructor(writer, className);
+
+        Output.initDefaultValues(ecuData,writer);
+
+        Output.outputFlagsAndConstants(ecuData, writer);
         Output.outputOutputChannels(ecuData, writer);
-        writer.println(TAB + "private Map<String,Double> fields = new HashMap<String,Double>();");
-        writer.println(TAB + ecuData.getQueryCommandStr());
-        writer.println(TAB + ecuData.getSignatureDeclaration());
-        writer.println(TAB + ecuData.getOchGetCommandStr());
-        writer.println(TAB + ecuData.getOchBlockSizeStr());
-        Output.outputRequiresPowerCycle(ecuData,writer);
-        Output.outputRTCalcs(ecuData, writer);
-        Output.outputLogInfo(ecuData, writer);
-        Output.outputGauges(ecuData, writer);
-        Output.outputMenus(ecuData, writer);
-        Output.outputUserDefined(ecuData, writer);
-        Output.outputTableEditors(ecuData, writer);
-        Output.outputCurves(ecuData, writer);
-        Output.outputUserDefinedVisibilityFlags(ecuData, writer);
-        Output.outputMenuVisibilityFlags(ecuData, writer);
-        Output.outputSettingGroups(ecuData,writer);
+//        writer.println(TAB + "private final Map<String,Double> fields = new HashMap<>();");
+//        writer.println(TAB + ecuData.getQueryCommandStr());
+//        writer.println(TAB + ecuData.getSignatureDeclaration());
+//        writer.println(TAB + ecuData.getOchGetCommandStr());
+//        writer.println(TAB + ecuData.getOchBlockSizeStr());
+//        Output.outputRequiresPowerCycle(ecuData,writer);
+//        Output.outputRTCalcs(ecuData, writer);
+//        Output.outputLogInfo(ecuData, writer);
+//        Output.outputGauges(ecuData, writer);
+//        Output.outputSettingGroups(ecuData,writer);
         // outputGaugeDoc(writer);
 
-        Output.outputOverrides(ecuData,writer);
-        Output.outputLoadConstants(ecuData,writer);
-        Output.outputFlagsAndConstants(ecuData, writer);
-        Output.outputGlobalVars(ecuData,writer);
+       Output.outputOverrides(ecuData,writer);
+//        Output.outputLoadConstants(ecuData,writer);
+//        Output.outputGlobalVars(ecuData,writer);
         writer.println("\n}\n");
 
         writer.close();
@@ -321,14 +295,13 @@ public class Normaliser
 
     private static String getFingerprint()
     {
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         try
         {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] array = md.digest(ecuData.getFingerprintSource().getBytes());
-            for (int i = 0; i < array.length; i++)
-            {
-                b.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1, 3));
+            for (byte value : array) {
+                b.append(Integer.toHexString((value & 0xFF) | 0x100), 1, 3);
             }
         }
         catch (NoSuchAlgorithmException e)

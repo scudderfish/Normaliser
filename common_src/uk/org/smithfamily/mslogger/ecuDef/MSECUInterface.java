@@ -6,12 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.org.smithfamily.mslogger.ecuDef.Constant;
-import uk.org.smithfamily.mslogger.ecuDef.CurveEditor;
-import uk.org.smithfamily.mslogger.ecuDef.MSDialog;
-import uk.org.smithfamily.mslogger.ecuDef.Menu;
-import uk.org.smithfamily.mslogger.ecuDef.TableEditor;
-
 public interface MSECUInterface
 {
     Map<String,Constant> constants = new HashMap<String,Constant>();
@@ -65,22 +59,14 @@ public interface MSECUInterface
 
     public abstract boolean isCRC32Protocol();
 
-    public abstract void createTableEditors();
-    
-    public abstract void createCurveEditors();
-    
-    public abstract void createMenus();
-    
-    public abstract void createDialogs();
-    
-    public abstract void setUserDefinedVisibilityFlags();
-    
-    public abstract void setMenuVisibilityFlags();
-    
     public abstract String[] getControlFlags();
 
     public abstract void createSettingGroups();
     
     public abstract List<SettingGroup> getSettingGroups();
-    
+
+     default double arrayValue(int boardFuelOutputs, int pinLayout) {
+        return 0;
+     }
+
 }

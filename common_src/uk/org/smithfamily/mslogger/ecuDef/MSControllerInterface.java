@@ -13,11 +13,16 @@ public interface MSControllerInterface
 
     double[] loadWordVector(byte[] pageBuffer, int i, int j, double d, double e, int k, boolean b);
 
+    @SuppressWarnings("unused")
     double[][] loadWordArray(byte[] pageBuffer, int i, int j, int k, double d, double e, int l, boolean b);
 
     double round(double x);
 
     int table(double x, String t);
+
+    default int arrayValue(int[] a, int x) {
+        return a[x];
+    }
 
     int timeNow();
 

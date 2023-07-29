@@ -1,30 +1,18 @@
 package uk.org.smithfamily.utils.normaliser;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import uk.org.smithfamily.mslogger.ecuDef.Constant;
 import uk.org.smithfamily.mslogger.ecuDef.OutputChannel;
 import uk.org.smithfamily.mslogger.ecuDef.SettingGroup;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveTracker;
-import uk.org.smithfamily.utils.normaliser.menu.MenuTracker;
-import uk.org.smithfamily.utils.normaliser.tableeditor.TableTracker;
-import uk.org.smithfamily.utils.normaliser.userdefined.UserDefinedTracker;
+
+import java.util.*;
 
 public class ECUData
 {
-	private List<String> runtime = new ArrayList<String>();
-	private List<String> logHeader = new ArrayList<String>();
-	private List<String> logRecord = new ArrayList<String>();
-	private List<String> gaugeDef = new ArrayList<String>();
-	private List<TableTracker> tableDefs = new ArrayList<TableTracker>();
-	private List<CurveTracker> curveDefs = new ArrayList<CurveTracker>();
-	private List<MenuTracker> menuDefs = new ArrayList<MenuTracker>();
-	private List<UserDefinedTracker> dialogDefs = new ArrayList<UserDefinedTracker>();
+	private Set<String> initalisedConstants = new HashSet<>();
+	private List<String> runtime = new ArrayList<>();
+	private List<String> logHeader = new ArrayList<>();
+	private List<String> logRecord = new ArrayList<>();
+	private List<String> gaugeDef = new ArrayList<>();
 	private Map<String, String> fieldControlExpressions;
 	private Map<String, String> menuControlExpressions;
 	private Map<String, String> runtimeVars;
@@ -68,19 +56,9 @@ public class ECUData
 		return logHeader;
 	}
 
-	public void setLogHeader(List<String> logHeader)
-	{
-		this.logHeader = logHeader;
-	}
-
 	public List<String> getLogRecord()
 	{
 		return logRecord;
-	}
-
-	public void setLogRecord(List<String> logRecord)
-	{
-		this.logRecord = logRecord;
 	}
 
 	public List<String> getGaugeDef()
@@ -88,36 +66,27 @@ public class ECUData
 		return gaugeDef;
 	}
 
-	public void setGaugeDef(List<String> gaugeDef)
-	{
-		this.gaugeDef = gaugeDef;
-	}
-
 	public void reset()
 	{
-		runtime = new ArrayList<String>();
-		logHeader = new ArrayList<String>();
-		logRecord = new ArrayList<String>();
-		fieldControlExpressions = new HashMap<String, String>();
-		menuControlExpressions = new HashMap<String, String>();
-		runtimeVars = new HashMap<String, String>();
-		evalVars = new HashMap<String, String>();
-		constantVars = new HashMap<String, String>();
-		defaults = new ArrayList<String>();
-		requiresPowerCycle = new ArrayList<String>();
-		constants = new ArrayList<Constant>();
-		outputChannels = new ArrayList<OutputChannel>();
-		flags = new HashSet<String>();
-		gaugeDef = new ArrayList<String>();
-		gaugeDoc = new ArrayList<String>();
-		defaultGauges = new ArrayList<String>();
-		pageActivateCommands = new ArrayList<String>();
-		pageIdentifiers = new ArrayList<String>();
-		tableDefs = new ArrayList<TableTracker>();
-		curveDefs = new ArrayList<CurveTracker>();
-		menuDefs = new ArrayList<MenuTracker>();
-		dialogDefs = new ArrayList<UserDefinedTracker>();
-		settingGroups = new  ArrayList<SettingGroup>();
+		runtime = new ArrayList<>();
+		logHeader = new ArrayList<>();
+		logRecord = new ArrayList<>();
+		fieldControlExpressions = new HashMap<>();
+		menuControlExpressions = new HashMap<>();
+		runtimeVars = new HashMap<>();
+		evalVars = new HashMap<>();
+		constantVars = new HashMap<>();
+		defaults = new ArrayList<>();
+		requiresPowerCycle = new ArrayList<>();
+		constants = new ArrayList<>();
+		outputChannels = new ArrayList<>();
+		flags = new HashSet<>();
+		gaugeDef = new ArrayList<>();
+		gaugeDoc = new ArrayList<>();
+		defaultGauges = new ArrayList<>();
+		pageActivateCommands = new ArrayList<>();
+		pageIdentifiers = new ArrayList<>();
+		settingGroups = new ArrayList<>();
 		fingerprintSource = "";
 		currentPage = 0;
 		isCRC32Protocol = false;
@@ -132,19 +101,9 @@ public class ECUData
 		return runtimeVars;
 	}
 
-	public void setRuntimeVars(Map<String, String> runtimeVars)
-	{
-		this.runtimeVars = runtimeVars;
-	}
-
 	public Map<String, String> getEvalVars()
 	{
 		return evalVars;
-	}
-
-	public void setEvalVars(Map<String, String> evalVars)
-	{
-		this.evalVars = evalVars;
 	}
 
 	public Map<String, String> getConstantVars()
@@ -152,39 +111,19 @@ public class ECUData
 		return constantVars;
 	}
 
-	public void setConstantVars(Map<String, String> constantVars)
-	{
-		this.constantVars = constantVars;
-	}
-
 	public List<String> getDefaults()
 	{
 		return defaults;
 	}
 
-	public void setDefaults(List<String> defaults)
-	{
-		this.defaults = defaults;
-	}
-	
 	public List<String> getRequiresPowerCycle()
 	{
 	    return requiresPowerCycle;
-	}
-	
-	public void setRequiresPowerCycle(List<String> requiresPowerCycle)
-	{
-	    this.requiresPowerCycle = requiresPowerCycle;
 	}
 
 	public Set<String> getFlags()
 	{
 		return flags;
-	}
-
-	public void setFlags(Set<String> flags)
-	{
-		this.flags = flags;
 	}
 
 	public String getFingerprintSource()
@@ -202,11 +141,6 @@ public class ECUData
 		return gaugeDoc;
 	}
 
-	public void setGaugeDoc(ArrayList<String> gaugeDoc)
-	{
-		this.gaugeDoc = gaugeDoc;
-	}
-
 	public ArrayList<Constant> getConstants()
 	{
 		return constants;
@@ -220,11 +154,6 @@ public class ECUData
 	public void setConstants(ArrayList<Constant> constants)
 	{
 		this.constants = constants;
-	}
-	
-	public void setOutputChannels(ArrayList<OutputChannel> outputChannels)
-	{
-	    this.outputChannels = outputChannels;
 	}
 
 	public ArrayList<String> getPageSizes()
@@ -312,11 +241,6 @@ public class ECUData
 		return defaultGauges;
 	}
 
-	public void setDefaultGauges(ArrayList<String> defaultGauges)
-	{
-		this.defaultGauges = defaultGauges;
-	}
-
 	public boolean isCRC32Protocol()
 	{
 		return isCRC32Protocol;
@@ -367,47 +291,7 @@ public class ECUData
 		this.classSignature = classSignature;
 	}
 
-	public List<TableTracker> getTableDefs()
-	{
-		return tableDefs;
-	}
-
-	public void setTableDefs(List<TableTracker> tableDefs)
-	{
-		this.tableDefs = tableDefs;
-	}
-
-	public List<CurveTracker> getCurveDefs()
-	{
-		return curveDefs;
-	}
-
-	public void setCurveDefs(List<CurveTracker> curveDefs)
-	{
-		this.curveDefs = curveDefs;
-	}
-
-	public List<MenuTracker> getMenuDefs()
-	{
-		return menuDefs;
-	}
-
-	public void setMenuDefs(List<MenuTracker> menuDefs)
-	{
-		this.menuDefs = menuDefs;
-	}
-
-	public List<UserDefinedTracker> getDialogDefs()
-	{
-		return dialogDefs;
-	}
-
-	public void setDialogDefs(List<UserDefinedTracker> dialogDefs)
-	{
-		this.dialogDefs = dialogDefs;
-	}
-
-    public Map<String, String> getFieldControlExpressions()
+	public Map<String, String> getFieldControlExpressions()
     {
         return fieldControlExpressions;
     }
@@ -421,4 +305,8 @@ public class ECUData
     {
         return settingGroups;
     }
+
+	public Set<String> getInitalisedConstants() {
+		return initalisedConstants;
+	}
 }

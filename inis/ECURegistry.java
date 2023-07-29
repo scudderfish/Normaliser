@@ -9,7 +9,7 @@ public enum ECURegistry
 {
     INSTANCE;
     
-    private Map<String,Class<? extends MSECUInterface> > ecus = new HashMap<String,Class<? extends MSECUInterface> >();
+    private Map<String,Class<? extends MSECUInterface> > ecus = new HashMap<>();
     
     ECURegistry()
     {

@@ -1,43 +1,13 @@
 package uk.org.smithfamily.utils.normaliser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-
 import org.apache.commons.lang3.StringUtils;
-
 import uk.org.smithfamily.mslogger.ecuDef.Constant;
 import uk.org.smithfamily.mslogger.ecuDef.OutputChannel;
 import uk.org.smithfamily.mslogger.ecuDef.SettingGroup;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveColumnLabel;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveDefinition;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveGauge;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveLineLabel;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurvePreProcessor;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveTracker;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveXAxis;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveXBins;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveYAxis;
-import uk.org.smithfamily.utils.normaliser.curveeditor.CurveYBins;
-import uk.org.smithfamily.utils.normaliser.menu.MenuDefinition;
-import uk.org.smithfamily.utils.normaliser.menu.MenuPreProcessor;
-import uk.org.smithfamily.utils.normaliser.menu.MenuTracker;
-import uk.org.smithfamily.utils.normaliser.menu.SubMenuDefinition;
-import uk.org.smithfamily.utils.normaliser.tableeditor.GridHeight;
-import uk.org.smithfamily.utils.normaliser.tableeditor.GridOrient;
-import uk.org.smithfamily.utils.normaliser.tableeditor.PreProcessor;
-import uk.org.smithfamily.utils.normaliser.tableeditor.TableDefinition;
-import uk.org.smithfamily.utils.normaliser.tableeditor.TableTracker;
-import uk.org.smithfamily.utils.normaliser.tableeditor.UpDownLabel;
-import uk.org.smithfamily.utils.normaliser.tableeditor.XBins;
-import uk.org.smithfamily.utils.normaliser.tableeditor.YBins;
-import uk.org.smithfamily.utils.normaliser.tableeditor.ZBins;
-import uk.org.smithfamily.utils.normaliser.userdefined.UserDefinedDefinition;
-import uk.org.smithfamily.utils.normaliser.userdefined.UserDefinedField;
-import uk.org.smithfamily.utils.normaliser.userdefined.UserDefinedPanel;
-import uk.org.smithfamily.utils.normaliser.userdefined.UserDefinedPreProcessor;
-import uk.org.smithfamily.utils.normaliser.userdefined.UserDefinedTracker;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
 
 public class Process
 {
@@ -71,11 +41,11 @@ public class Process
     private static String convertC2JavaBoolean(String expression)
     {
         Matcher matcher = Patterns.booleanConvert.matcher(expression);
-        StringBuffer result = new StringBuffer(expression.length());
+        StringBuilder result = new StringBuilder(expression.length());
         while (matcher.find())
         {
             matcher.appendReplacement(result, "");
-            result.append(matcher.group(1) + " ? 1 : 0)");
+            result.append(matcher.group(1)).append(" ? 1 : 0)");
         }
         matcher.appendTail(result);
         expression = result.toString();
@@ -110,7 +80,7 @@ public class Process
 
     static void processExpr(ECUData ecuData, String line)
     {
-        String definition = null;
+        String definition;
         line = removeComments(line);
 
         line = StringUtils.replace(line, "timeNow", "timeNow()");
@@ -258,10 +228,6 @@ public class Process
 
     /**
      * Occasionally we get a collision between the name of a constant and an expression. Test for that here.
-     * 
-     * @param ecuData
-     * @param name
-     * @return
      */
     private static boolean constantDefined(ECUData ecuData, String name)
     {
@@ -302,7 +268,7 @@ public class Process
     static String processPreprocessor(ECUData ecuData, String line)
     {
         String filtered;
-        boolean stripped = false;
+        boolean stripped;
 
         filtered = line.replace("  ", " ");
         stripped = filtered.equals(line);
@@ -423,8 +389,7 @@ public class Process
 
     /**
      * Process the [Constants] section of the ini file
-     * 
-     * @param line
+     *
      */
     static void processConstants(ECUData ecuData, String line)
     {
@@ -455,7 +420,7 @@ public class Process
         {
             String values = StringUtils.remove(pageSizesM.group(1), ' ');
             String[] list = values.split(",");
-            ecuData.setPageSizes(new ArrayList<String>(Arrays.asList(list)));
+            ecuData.setPageSizes(new ArrayList<>(Arrays.asList(list)));
         }
         Matcher pageIdentifersM = Patterns.pageIdentifier.matcher(line);
         if (pageIdentifersM.matches())
@@ -463,7 +428,7 @@ public class Process
             String values = StringUtils.remove(pageIdentifersM.group(1), ' ');
             values = StringUtils.remove(values, '"');
             String[] list = values.split(",");
-            ecuData.setPageIdentifiers(new ArrayList<String>(Arrays.asList(list)));
+            ecuData.setPageIdentifiers(new ArrayList<>(Arrays.asList(list)));
         }
 
         Matcher pageActivateM = Patterns.pageActivate.matcher(line);
@@ -472,7 +437,7 @@ public class Process
             String values = StringUtils.remove(pageActivateM.group(1), ' ');
             values = StringUtils.remove(values, '"');
             String[] list = values.split(",");
-            ecuData.setPageActivateCommands(new ArrayList<String>(Arrays.asList(list)));
+            ecuData.setPageActivateCommands(new ArrayList<>(Arrays.asList(list)));
         }
 
         Matcher pageReadCommandM = Patterns.pageReadCommand.matcher(line);
@@ -481,7 +446,7 @@ public class Process
             String values = StringUtils.remove(pageReadCommandM.group(1), ' ');
             values = StringUtils.remove(values, '"');
             String[] list = values.split(",");
-            ecuData.setPageReadCommands(new ArrayList<String>(Arrays.asList(list)));
+            ecuData.setPageReadCommands(new ArrayList<>(Arrays.asList(list)));
         }
 
         Matcher interWriteDelayM = Patterns.interWriteDelay.matcher(line);
@@ -502,6 +467,9 @@ public class Process
         Matcher constantM = Patterns.constantScalar.matcher(line);
         Matcher constantSimpleM = Patterns.constantSimple.matcher(line);
         Matcher constantArrayM = Patterns.constantArray.matcher(line);
+        if(line.contains("iacCLminValue")) {
+            int x=1;
+        }
         if (constantM.matches())
         {
             String name = constantM.group(1);
@@ -519,6 +487,7 @@ public class Process
 
             int digits = !StringUtils.isEmpty(digitsText) ? (int) Double.parseDouble(digitsText) : 0;
 
+            //noinspection SuspiciousMethodCalls
             if (!ecuData.getConstants().contains(name))
             {
                 Constant c = new Constant(ecuData.getCurrentPage(), name, classtype, type, offset, "", units, scale, translate,
@@ -555,6 +524,7 @@ public class Process
 
             int digits = !StringUtils.isEmpty(digitsText) ? (int) Double.parseDouble(digitsText) : 0;
 
+            //noinspection SuspiciousMethodCalls
             if (!ecuData.getConstants().contains(name))
             {
                 Constant c = new Constant(ecuData.getCurrentPage(), name, classtype, type, offset, shape, units, scale, translate,
@@ -624,386 +594,16 @@ public class Process
 
     private static String removeCurlyBrackets(String line)
     {
-        return line.replaceAll("\\{", "").replaceAll("\\}", "");
+        return line.replaceAll("\\{", "").replaceAll("}", "");
     }
 
-    /**
-     * Process the [Menu] section of the ini file
-     * 
-     * @param line
-     */
-    static void processMenu(ECUData ecuData, String line)
-    {
-        line = removeComments(line);
-        if (StringUtils.isEmpty(line))
-        {
-            return;
-        }
 
-        Matcher menuDialog = Patterns.menuDialog.matcher(line);
-        Matcher menu = Patterns.menu.matcher(line);
-        Matcher subMenu = Patterns.subMenu.matcher(line);
 
-        final List<MenuTracker> menuDefs = ecuData.getMenuDefs();
-        MenuTracker m = null;
-        if (menuDefs.size() > 0)
-        {
-            m = menuDefs.get(menuDefs.size() - 1);
-        }
 
-        if (m == null)
-        {
-            m = new MenuTracker();
-            menuDefs.add(m);
-        }
 
-        if (menuDialog.matches())
-        {
-            currentMenuDialog = menuDialog.group(1);
-        }
-        else if (menu.matches())
-        {
-            MenuDefinition x = new MenuDefinition(currentMenuDialog, menu.group(1));
-            m.addItem(currentMenuDialog, x);
-        }
-        else if (subMenu.matches())
-        {
-            String name = subMenu.group(1);
-            String label = subMenu.group(3);
-            String randomNumber = subMenu.group(5);
-            String expression = subMenu.group(7);
-            
-            SubMenuDefinition x = new SubMenuDefinition(name, label, randomNumber);            
-            m.addItem(currentMenuDialog, x);
-            
-            // Add the expression too
-            if (expression == null || StringUtils.isEmpty(expression))
-            {
-                expression = "true";
-            }
-            else
-            {
-                expression = removeCurlyBrackets(expression);
-                expression = ExpressionWrangler.convertExpr(expression);
-            }
-            
-            ecuData.getMenuControlExpressions().put(name, expression);
-        }
-        else
-        {
-            MenuPreProcessor p = new MenuPreProcessor(processPreprocessor(ecuData, line));
-            m.addItem(currentMenuDialog, p);
-        }
-    }
 
-    /**
-     * Process the [TablEditor] section of the ini file
-     * 
-     * @param line
-     */
-    static void processTableEditor(ECUData ecuData, String line)
-    {
-        line = removeComments(line);
-        if (StringUtils.isEmpty(line))
-        {
-            return;
-        }
 
-        Matcher table = Patterns.tablEditorTable.matcher(line);
-        Matcher xBins = Patterns.tablEditorXBins.matcher(line);
-        Matcher yBins = Patterns.tablEditorYBins.matcher(line);
-        Matcher zBins = Patterns.tablEditorZBins.matcher(line);
-        Matcher upDownLabel = Patterns.tablEditorUpDownLabel.matcher(line);
-        Matcher gridHeight = Patterns.tablEditorGridHeight.matcher(line);
-        Matcher gridOrient = Patterns.tablEditorGridOrient.matcher(line);
 
-        final List<TableTracker> tableDefs = ecuData.getTableDefs();
-        TableTracker t = null;
-        if (tableDefs.size() > 0)
-        {
-            t = tableDefs.get(tableDefs.size() - 1);
-        }
-        if (t == null)
-        {
-            t = new TableTracker();
-            tableDefs.add(t);
-        }
-        if (table.matches())
-        {
-            if (t.isDefinitionCompleted())
-            {
-                t = new TableTracker();
-                tableDefs.add(t);
-            }
-            TableDefinition td = new TableDefinition(t, table.group(1), table.group(2), table.group(3), table.group(4));
-            t.addItem(td);
-        }
-        else if (xBins.matches())
-        {
-            XBins x = new XBins(xBins.group(1), xBins.group(2), xBins.group(4));
-            t.addItem(x);
-        }
-        else if (yBins.matches())
-        {
-            YBins y = new YBins(yBins.group(1), yBins.group(2), yBins.group(4));
-            t.addItem(y);
-        }
-        else if (zBins.matches())
-        {
-            ZBins z = new ZBins(zBins.group(1));
-            t.addItem(z);
-        }
-        else if (upDownLabel.matches())
-        {
-            UpDownLabel l = new UpDownLabel(upDownLabel.group(1), upDownLabel.group(2));
-            t.addItem(l);
-        }
-        else if (gridHeight.matches())
-        {
-            GridHeight g = new GridHeight(gridHeight.group(1));
-            t.addItem(g);
-        }
-        else if (gridOrient.matches())
-        {
-            GridOrient g = new GridOrient(gridOrient.group(1), gridOrient.group(2), gridOrient.group(3));
-            t.addItem(g);
-        }
-        else
-        {
-            PreProcessor p = new PreProcessor(processPreprocessor(ecuData, line));
-            if (t != null && !t.isDefinitionCompleted())
-            {
-                t.addItem(p);
-            }
-            else
-            {
-                t = new TableTracker();
-                tableDefs.add(t);
-                t.addItem(p);
-            }
-        }
-    }
-
-    /**
-     * Process the [CurveEditor] section of the ini file
-     * 
-     * @param line
-     */
-    static void processCurveEditor(ECUData ecuData, String line)
-    {
-        line = removeComments(line);
-        if (StringUtils.isEmpty(line))
-        {
-            return;
-        }
-
-        line = removeCurlyBrackets(line);
-
-        Matcher curve = Patterns.curve.matcher(line);
-        Matcher columnLabel = Patterns.curveColumnLabel.matcher(line);
-        Matcher xAxis = Patterns.curveXAxis.matcher(line);
-        Matcher yAxis = Patterns.curveYAxis.matcher(line);
-        Matcher xBins = Patterns.curveXBins.matcher(line);
-        Matcher yBins = Patterns.curveYBins.matcher(line);
-        Matcher gauge = Patterns.curveGauge.matcher(line);
-        Matcher lineLabel = Patterns.curveLineLabel.matcher(line);
-
-        final List<CurveTracker> curveDefs = ecuData.getCurveDefs();
-        CurveTracker c = null;
-        if (line.contains("cltlowlim"))
-        {
-            // Break point hook
-            @SuppressWarnings("unused")
-            int x = 1;
-        }
-        if (curveDefs.size() > 0)
-        {
-            c = curveDefs.get(curveDefs.size() - 1);
-        }
-        if (c == null)
-        {
-            c = new CurveTracker();
-            curveDefs.add(c);
-        }
-
-        if (curve.matches())
-        {
-            if (c.isDefinitionCompleted())
-            {
-                c = new CurveTracker();
-                curveDefs.add(c);
-            }
-            CurveDefinition cd = new CurveDefinition(c, curve.group(1), curve.group(2));
-            c.addItem(cd);
-        }
-        else if (columnLabel.matches())
-        {
-            CurveColumnLabel x = new CurveColumnLabel(columnLabel.group(1), columnLabel.group(2));
-            c.addItem(x);
-        }
-        else if (xAxis.matches())
-        {
-            CurveXAxis x = new CurveXAxis(xAxis.group(1), xAxis.group(2), xAxis.group(3));
-            c.addItem(x);
-        }
-        else if (yAxis.matches())
-        {
-            CurveYAxis x = new CurveYAxis(yAxis.group(1), yAxis.group(2), yAxis.group(3));
-            c.addItem(x);
-        }
-        else if (xBins.matches())
-        {
-            String xBins2 = "0";
-            if (xBins.group(3) != null)
-                xBins2 = xBins.group(3);
-
-            CurveXBins x = new CurveXBins(xBins.group(1), xBins2, xBins.group(5));
-            c.addItem(x);
-        }
-        else if (yBins.matches())
-        {
-            CurveYBins x = new CurveYBins(yBins.group(1));
-            c.addItem(x);
-        }
-        else if (gauge.matches())
-        {
-            CurveGauge x = new CurveGauge(gauge.group(1));
-            c.addItem(x);
-        }
-        else if (lineLabel.matches())
-        {
-            CurveLineLabel x = new CurveLineLabel(lineLabel.group(1));
-            c.addItem(x);
-        }
-        else
-        {
-            CurvePreProcessor p = new CurvePreProcessor(processPreprocessor(ecuData, line));
-            if (c != null && !c.isDefinitionCompleted())
-            {
-                c.addItem(p);
-            }
-            else
-            {
-                c = new CurveTracker();
-                curveDefs.add(c);
-                c.addItem(p);
-            }
-        }
-    }
-
-    /**
-     * Process the [UserDefined] section of the ini file
-     * 
-     * @param line
-     */
-    static void processUserDefined(ECUData ecuData, String line)
-    {
-        line = removeComments(line);
-        if (StringUtils.isEmpty(line))
-        {
-            return;
-        }
-
-        Matcher dialog = Patterns.dialog.matcher(line);
-        Matcher dialogField = Patterns.dialogField.matcher(line);
-        Matcher dialogDisplayOnlyField = Patterns.dialogDisplayOnlyField.matcher(line);
-        Matcher dialogPanel = Patterns.dialogPanel.matcher(line);
-
-        final List<UserDefinedTracker> dialogDefs = ecuData.getDialogDefs();
-        UserDefinedTracker d = null;
-        if (dialogDefs.size() > 0)
-        {
-            d = dialogDefs.get(dialogDefs.size() - 1);
-        }
-
-        if (dialog.matches())
-        {
-            String name = dialog.group(1);
-            String label = dialog.group(2);
-            String axis = dialog.group(4);
-            d = new UserDefinedTracker();
-            dialogDefs.add(d);
-            UserDefinedDefinition x = new UserDefinedDefinition(d, name, label, axis);
-            
-            d.addItem(x);
-            d.setName(name);
-        }
-        else if (dialogField.matches())
-        {
-            createDialogField(ecuData, dialogField, d, false);
-        }
-        else if (dialogDisplayOnlyField.matches())
-        {
-            createDialogField(ecuData, dialogDisplayOnlyField, d, true);
-        }
-        else if (dialogPanel.matches())
-        {
-            String name = dialogPanel.group(1);
-            String orientation = dialogPanel.group(3);
-            
-            String expression = dialogPanel.group(5);
-            String visibilityFlag = d.getName() + "_" + name;
-            
-            if (expression == null || StringUtils.isEmpty(expression))
-            {
-                expression = "true";
-            }
-            else
-            {
-                expression = removeCurlyBrackets(expression);
-                expression = ExpressionWrangler.convertExpr(expression);
-            }
-            ecuData.getFieldControlExpressions().put(visibilityFlag, expression);
-            
-            UserDefinedPanel x = new UserDefinedPanel(name, orientation);
-            d.addItem(x);
-        }
-        else
-        {
-            String preproc = processPreprocessor(ecuData, line);
-            if (!preproc.equals(""))
-            {
-                UserDefinedPreProcessor p = new UserDefinedPreProcessor(preproc);
-                if (d != null)
-                {
-                    d.addItem(p);
-                }
-                else
-                {
-                    d = new UserDefinedTracker();
-                    dialogDefs.add(d);
-                    d.addItem(p);
-                }
-            }
-        }
-    }
-
-    private static void createDialogField(ECUData ecuData, Matcher dialogField, UserDefinedTracker d, boolean readOnly)
-    {
-        final String label = dialogField.group(1).trim();
-        final String name = dialogField.group(3);
-        String expression = dialogField.group(5);
-        String visibilityFlag = d.getName() + "_" + name;
-        if (visibilityFlag.equals("null_staged_extended_opts_simult"))
-        {
-            // Break point hook
-        	@SuppressWarnings("unused")
-            int x =1;
-        }
-        if (expression == null || StringUtils.isEmpty(expression))
-        {
-            expression = "true";
-        }
-        else
-        {
-            expression = removeCurlyBrackets(expression);
-            expression = ExpressionWrangler.convertExpr(expression);
-        }
-        ecuData.getFieldControlExpressions().put(visibilityFlag, expression);
-
-        UserDefinedField x = new UserDefinedField(label, name, readOnly);
-        d.addItem(x);
-    }
 
     static void processConstantsExtensions(ECUData ecuData, String line)
     {
@@ -1011,18 +611,27 @@ public class Process
 
         if (line.contains("defaultValue"))
         {
-            String statement = "";
+            String statement;
+            if(line.contains("injAng")) {
+                int x=1;
+            }
             String[] definition = line.split("=")[1].split(",");
-            if (definition[1].contains("\""))
-            {
-                statement = "String ";
+            String varName = definition[0].trim();
+            if(ecuData.getConstantVars().containsKey(varName)) {
+
+                String varType = ecuData.getConstantVars().get(varName);
+                statement= varName + " = ";
+                String value = definition[1];
+                if(varType.contains("[]")){
+                    statement += "new "+varType+"{" + value.trim().replace(' ',',') + "};";
+                } else {
+                    statement+= value +";";
+                }
+                ecuData.getInitalisedConstants().add(varName);
             }
-            else
-            {
-                statement = "int ";
+            else {
+                statement = definition[0] + " = " + definition[1] + ";";
             }
-            
-            statement += definition[0] + " = " + definition[1] + ";";
             ecuData.getDefaults().add(statement);
         }
         else if (line.contains("requiresPowerCycle"))
@@ -1032,7 +641,7 @@ public class Process
         }
     }
 
-    static void processPcVariables(ECUData ecuData, String line)
+    static void processPcVariables()
     {
 
     }

@@ -9,7 +9,7 @@ import java.util.Map;
 public class ExpressionWrangler
 {
 	//Cheat translation table.  See usage in code below.
-	static Map<String,String> translations = new HashMap<String,String>();
+	static Map<String,String> translations = new HashMap<>();
 	static
 	{
 	    // User defined
@@ -31,16 +31,11 @@ public class ExpressionWrangler
 	    translations.put("(RevLimCLTbased & 1)", "(RevLimCLTbased & 1) != 0");
 	}
 
-	/**
-	 * Entry point.  Take an INI visibility expression and attempt to convert it to Java
-	 * @param e
-	 * @return
-	 */
 	public static String convertExpr(String e)
 	{
 		//Normalise space
 		e = e.trim();
-		e = e.replaceAll("  ", " ");
+		e = e.replaceAll(" {2}", " ");
 		
 		//Some expressions are just too much hard work, so use a cheat translation table to do the conversion
 		if (translations.containsKey(e))
@@ -48,7 +43,7 @@ public class ExpressionWrangler
 			return translations.get(e);
 		}
 
-		StringBuffer b = new StringBuffer();
+		StringBuilder b = new StringBuilder();
 
 		//Are we processing something that looks like a variable?
 		boolean inIdentifier = false;
@@ -153,9 +148,8 @@ public class ExpressionWrangler
 				b.append("!=0 ");
 			}
 		}
-		String result = b.toString();
 
-		return result;
+		return b.toString();
 	}
 
 	/*
@@ -177,17 +171,13 @@ public class ExpressionWrangler
 		"testmode == 2 && testop_pwm && !extrainj" 
 	};
 	
-	/**
-	 * Run tests from the command line, output before and after
-	 * @param args
-	 */
 	public static void main(String[] args)
 	{
 
 		for (String e : exprs)
 		{
 			String result = convertExpr(e);
-			System.out.println(String.format("%s  :  %s", e, result));
+			System.out.printf("%s  :  %s%n", e, result);
 		}
 	}
 
