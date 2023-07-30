@@ -155,7 +155,7 @@ public class Process
             double scaleOC = !StringUtils.isEmpty(scale) ? safeDouble(scale) : 0;
             double translateOC = !StringUtils.isEmpty(numOffset) ? safeDouble(numOffset) : 0;
             
-            OutputChannel outputChannel = new OutputChannel(name, dataType, offsetOC, units, scaleOC, translateOC);
+            OutputChannel outputChannel = new OutputChannel(name, dataType, offsetOC, units, scaleOC, translateOC,null);
             ecuData.getOutputChannels().add(outputChannel);
 
 
@@ -199,7 +199,7 @@ public class Process
             String dataType;
                 dataType = "double";
             ecuData.getEvalVars().put(name, dataType);
-            OutputChannel outputChannel = new OutputChannel(name, dataType, -1, "", 1, 0);
+            OutputChannel outputChannel = new OutputChannel(name, dataType, -1, "", 1, 0,null);
             ecuData.getOutputChannels().add(outputChannel);
             
         }
@@ -225,7 +225,7 @@ public class Process
             String preproc = processPreprocessor(ecuData, line);
             ecuData.getRuntime().add(preproc);
             
-            OutputChannel oc = new OutputChannel(preproc, "PREPROC", 0, "", 0, 0);
+            OutputChannel oc = new OutputChannel(preproc, "PREPROC", 0, "", 0, 0,null);
             ecuData.getOutputChannels().add(oc);
         }
         else if (!StringUtils.isEmpty(line))

@@ -1,15 +1,19 @@
 package uk.org.smithfamily.mslogger.ecuDef;
 
+import java.lang.reflect.Field;
+
 public class OutputChannel
 {
-    private String name;
-    private String type;
-    private int offset;
-    private String units;
-    private double scale;
-    private double translate;
-    
-    public OutputChannel(String name, String type, int offset, String units, double scale, double translate)
+    private String     name;
+    private String     type;
+    private int        offset;
+    private String     units;
+    private String     scale;
+    private double     translate;
+    private DataSource source;
+    private Field      field;
+
+    public OutputChannel(String name, String type, int offset, String units, String scale, double translate, DataSource source)
     {
         this.name = name;
         this.type = type;
@@ -17,8 +21,65 @@ public class OutputChannel
         this.units = units;
         this.scale = scale;
         this.translate = translate;
+        this.source = source;
+        if (source != null)
+        {
+            Class<?> c = source.getClass();
+
+            try
+            {
+                field = c.getDeclaredField(name);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
     }
-    
+
+    public OutputChannel(String name, String type, int offset, String units, double scale, double translate, DataSource source)
+    {
+        this.name = name;
+        this.type = type;
+        this.offset = offset;
+        this.units = units;
+        this.scale = Double.toString(scale);
+        this.translate = translate;
+        this.source = source;
+        if (source != null)
+        {
+            Class<?> c = source.getClass();
+
+            try
+            {
+                field = c.getDeclaredField(name);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    public double getValue()
+    {
+        double value = 0;
+        if (field != null)
+        {
+            try
+            {
+                value = field.getDouble(source);
+            }
+            catch (Exception e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return value;
+    }
+
     public String getName()
     {
         return name;
@@ -41,22 +102,21 @@ public class OutputChannel
 
     public double getScale()
     {
-        return scale;
+        return Double.parseDouble(scale);
     }
 
     public double getTranslate()
     {
         return translate;
     }
-    
+
+    public DataSource getSource()
+    {
+        return source;
+    }
+
     public String toString()
     {
-        return String.format("OutputChannel(\"%s\",\"%s\",%d,\"%s\",%f,%f)",
-                name,
-                type,
-                offset,
-                units,
-                scale,
-                translate);
+        return String.format("OutputChannel(\"%s\",\"%s\",%d,\"%s\",%s,%f,this)", name, type, offset, units, scale, translate);
     }
 }

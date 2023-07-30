@@ -1,72 +1,90 @@
 package uk.org.smithfamily.mslogger.ecuDef;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public interface MSECUInterface
 {
-    Map<String,Constant> constants = new HashMap<String,Constant>();
+    Map<String, Constant> constants = new HashMap<>();
 
-    Map<String,TableEditor> tableEditors = new HashMap<String,TableEditor>();
-    
-    Map<String,CurveEditor> curveEditors = new HashMap<String,CurveEditor>();
-    
-    Map<String,List<Menu>> menus = new HashMap<String,List<Menu>>();
-    
-    Map<String,MSDialog> dialogs = new HashMap<String,MSDialog>();
-    
-    Map<String,Boolean> userDefinedVisibilityFlags = new HashMap<String,Boolean>();
-    
-    Map<String,Boolean> menuVisibilityFlags = new HashMap<String,Boolean>();
-    
-    Map<String,OutputChannel> outputChannels = new HashMap<String,OutputChannel>();
-    
-    List<SettingGroup> settingGroups = new ArrayList<SettingGroup>();
+    Map<String, List<Menu>> menus = new HashMap<>();
+
+    Map<String, MSDialog> dialogs = new HashMap<>();
+
+    Map<String, Boolean> userDefinedVisibilityFlags = new HashMap<>();
+
+    Map<String, Boolean> menuVisibilityFlags = new HashMap<>();
+
+    Map<String, OutputChannel> outputChannels = new HashMap<>();
+
+    List<SettingGroup> settingGroups = new ArrayList<>();
+
+    Map<String, String> controllerCommands = new HashMap<>();
 
     void setFlags();
-    public abstract String getSignature();
 
-    public abstract byte[] getOchCommand();
+    String getSignature();
 
-    public abstract byte[] getSigCommand();
+    byte[] getOchCommand();
 
-    public abstract void loadConstants(boolean simulated) throws IOException;
+    byte[] getSigCommand();
 
-    public abstract void calculate(byte[] ochBuffer);
+    void loadConstants(boolean simulated) throws IOException;
 
-    public abstract String getLogHeader();
+    void calculate(byte[] ochBuffer);
 
-    public abstract String getLogRow();
+    String getLogHeader();
 
-    public abstract int getBlockSize();
+    String getLogRow();
 
-    public abstract int getSigSize();
+    int getBlockSize();
 
-    public abstract int getPageActivationDelay();
+    int getSigSize();
 
-    public abstract int getInterWriteDelay();
+    int getPageActivationDelay();
 
-    public abstract int getCurrentTPS();
+    List<String> getPageIdentifiers();
 
-    public abstract void initGauges();
+    List<byte[]> getPageActivates();
 
-    public abstract String[] defaultGauges();
-    
-    public abstract void refreshFlags();
+    List<String> getPageValueWrites();
 
-    public abstract boolean isCRC32Protocol();
+    List<String> getPageChunkWrites();
 
-    public abstract String[] getControlFlags();
+    int getInterWriteDelay();
 
-    public abstract void createSettingGroups();
-    
-    public abstract List<SettingGroup> getSettingGroups();
+    int getCurrentTPS();
 
-     default double arrayValue(double[] boardFuelOutputs, int pinLayout) {
-        return 0;
-     }
+    void refreshFlags();
+
+    boolean isCRC32Protocol();
+
+    void createTableEditors();
+
+    void createCurveEditors();
+
+    void createMenus();
+
+    void createDialogs();
+
+    void setUserDefinedVisibilityFlags();
+
+    void setMenuVisibilityFlags();
+
+    String[] getControlFlags();
+
+    void createSettingGroups();
+
+    List<SettingGroup> getSettingGroups();
+
+    List<String> getRequiresPowerCycle();
+
+    void createControllerCommands();
+
+    Map<String, String> getControllerCommands();
+
+    void initGauges();
+
+    String[] defaultGauges();
 
 }

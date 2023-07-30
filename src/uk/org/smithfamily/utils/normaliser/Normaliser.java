@@ -267,7 +267,7 @@ public class Normaliser
         writer.println("*/");
 
         writer.println("@SuppressWarnings(\"unused\")");
-        writer.println("public class " + className + " implements MSECUInterface\n{");
+        writer.println("public class " + className + " implements MSECUInterface, DataSource\n{");
         Output.declareVariables(ecuData,writer);
 
         Output.outputConstructor(writer, className);
