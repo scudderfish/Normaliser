@@ -55,7 +55,7 @@ public class Output {
         writer.println(TAB + "{");
         writer.println(TAB + TAB + "return parent.tempCvt(x);");
         writer.println(TAB + "}");
-        writer.println(TAB + "private double timeNow()");
+        writer.println(TAB + "private int timeNow()");
         writer.println(TAB + "{");
         writer.println(TAB + TAB + "return parent.timeNow();");
         writer.println(TAB + "}");
@@ -392,13 +392,13 @@ public class Output {
         }
         if (height == -1) {
             functionName += "Vector";
-            loadArray = String.format("%s = %s(pageBuffer, %d, %d, %s, %s, %s, %s);", c.getName(), functionName, c.getOffset(),
-                    width, c.getScale(), c.getTranslate(), c.getDigits(), signed);
+            loadArray = String.format("%s = %s(pageBuffer, %d, %d, %s);", c.getName(), functionName, c.getOffset(),
+                    width,  signed);
 
         } else {
             functionName += "Array";
-            loadArray = String.format("%s = %s(pageBuffer, %d, %d, %d, %s, %s, %s, %s);", c.getName(), functionName, c.getOffset(),
-                    width, height, c.getScale(), c.getTranslate(), c.getDigits(), signed);
+            loadArray = String.format("%s = %s(pageBuffer, %d, %d, %d, %s);", c.getName(), functionName, c.getOffset(),
+                    width, height, signed);
         }
         return loadArray;
     }
