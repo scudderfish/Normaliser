@@ -2,8 +2,10 @@ package uk.org.smithfamily.utils.normaliser;
 
 import org.apache.commons.lang3.StringUtils;
 import uk.org.smithfamily.mslogger.ecuDef.Constant;
+import uk.org.smithfamily.mslogger.ecuDef.MSUtilsShared;
 import uk.org.smithfamily.mslogger.ecuDef.OutputChannel;
 import uk.org.smithfamily.mslogger.ecuDef.SettingGroup;
+import uk.org.smithfamily.utils.normaliser.controllercommand.ControllerCommand;
 
 import java.io.PrintWriter;
 import java.util.*;
@@ -27,18 +29,19 @@ public class Output {
         writer.println("*/");
     }
 
-    static void outputConstructor(PrintWriter writer, String className) {
-        writer.println(TAB + "private final MSControllerInterface parent;");
-        writer.println(TAB + "private final MSUtilsInterface utils;");
+
+    public static void outputConstructor(final ECUData ecuData, final PrintWriter writer, final String className)
+    {
+        writer.println(TAB + "private MSControllerInterface parent;");
+        writer.println(TAB + "private MSUtilsInterface utils;");
         writer.println(TAB + "private final GaugeRegisterInterface gauges;");
+
         writer.println(TAB + "public " + className + "(MSControllerInterface parent,MSUtilsInterface utils,GaugeRegisterInterface gauges)");
         writer.println(TAB + "{");
         writer.println(TAB + TAB + "this.parent = parent;");
         writer.println(TAB + TAB + "this.utils  = utils;");
         writer.println(TAB + TAB + "this.gauges = gauges;");
-        writer.println(TAB + TAB + "this.parent.setImplementation(this);");
-        writer.println(TAB + TAB + "setFlags();");
-        writer.println(TAB + TAB + "setDefaultValues();");
+        writer.println(TAB + TAB + "initOutputChannels();");
         writer.println(TAB + "}");
         writer.println(TAB + "private double table(double x,String t)");
         writer.println(TAB + "{");
@@ -52,11 +55,12 @@ public class Output {
         writer.println(TAB + "{");
         writer.println(TAB + TAB + "return parent.tempCvt(x);");
         writer.println(TAB + "}");
-        writer.println(TAB + "private int timeNow()");
+        writer.println(TAB + "private double timeNow()");
         writer.println(TAB + "{");
         writer.println(TAB + TAB + "return parent.timeNow();");
         writer.println(TAB + "}");
     }
+
 
     /**
      * This is nasty. We need to have a set of methods to init the constants as there is a hard limit of 64K on the
@@ -413,42 +417,76 @@ public class Output {
 
     }
 
-    static void outputOverrides(ECUData ecuData, PrintWriter writer) {
-        String overrides = TAB + "@Override\n" + TAB + "public String getSignature()\n" + TAB + "{\n" + TAB + TAB
-                + "return signature;\n" + "}\n" + TAB + "@Override\n" + TAB + "public byte[] getOchCommand()\n" + TAB + "{\n" + TAB
-                + TAB + "return this.ochGetCommand;\n" + TAB + "}\n" +
 
-                TAB + "@Override\n" + TAB + "public byte[] getSigCommand()\n" + TAB + "{\n" + TAB + TAB
-                + "return this.queryCommand;\n" + TAB + "}\n" +
+        public static void outputOverrides(final ECUData ecuData, final PrintWriter writer)
+        {
+            StringBuilder pageIdentifierOutput = new StringBuilder();
+            for (final String pageIdentifier : ecuData.getPageIdentifiers())
+            {
+                pageIdentifierOutput.append(TAB + TAB + "pageIdentifiers.add(\"").append(pageIdentifier.replace("\\", "\\\\")).append("\");\n");
+            }
 
-                TAB + "@Override\n" + TAB + "public int getBlockSize()\n" + TAB + "{\n" + TAB + TAB + "return this.ochBlockSize;\n"
-                + TAB + "}\n" +
+            StringBuilder pageActivateOutput = new StringBuilder();
+            final int[] value = { 0 };
+            for (final String pageActivate : ecuData.getPageActivateCommands())
+            {
+                pageActivateOutput.append(TAB + TAB + "pageActivates.add(new byte[] {").append(MSUtilsShared.HexStringToBytes(new ArrayList<String>(), pageActivate, 0, 0, value, 0)).append("});\n");
+            }
 
-                TAB + "@Override\n" + TAB + "public int getSigSize()\n" + TAB + "{\n" + TAB + TAB + "return signature.length();\n"
-                + TAB + "}\n" +
+            StringBuilder pageValueWriteOutput = new StringBuilder();
+            for (final String pageValueWrite : ecuData.getPageValueWrites())
+            {
+                pageValueWriteOutput.append(TAB + TAB + "pageValueWrites.add(").append(pageValueWrite).append(");\n");
+            }
 
-                TAB + "@Override\n" + TAB + "public int getPageActivationDelay()\n" + TAB + "{\n" + TAB + TAB + "return "
-                + ecuData.getPageActivationDelayVal() + ";\n" + TAB + "}\n" +
+            StringBuilder pageChunkWriteOutput = new StringBuilder();
 
-                TAB + "@Override\n" + TAB + "public int getInterWriteDelay()\n" + TAB + "{\n" + TAB + TAB + "return "
-                + ecuData.getInterWriteDelay() + ";\n" + TAB + "}\n" + TAB + "@Override\n" + TAB
-                + "public boolean isCRC32Protocol()\n" + TAB + "{\n" + TAB + TAB + "return " + ecuData.isCRC32Protocol() + ";\n"
-                + TAB + "}\n" +
+            for (final String pageChunkWrite : ecuData.getPageChunkWrites())
+            {
+                pageChunkWriteOutput.append(TAB + TAB + "pageChunkWrites.add(").append(pageChunkWrite).append(");\n");
+            }
 
-                TAB + "@Override\n" + TAB + "public int getCurrentTPS()\n" + TAB + "{\n";
-        if (ecuData.getRuntimeVars().containsKey("tpsADC")) {
-            overrides += TAB + TAB + "return (int)tpsADC;\n";
-        } else {
-            overrides += TAB + TAB + "return 0;\n";
+            String overrides = TAB + "@Override\n" + TAB + "public String getSignature()\n" + TAB + "{\n" + TAB + TAB + "return signature;\n" + "}\n" + TAB + "@Override\n" + TAB + "public byte[] getOchCommand()\n" + TAB + "{\n" + TAB + TAB
+                    + "return this.ochGetCommand;\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public byte[] getSigCommand()\n" + TAB + "{\n" + TAB + TAB + "return this.queryCommand;\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public int getBlockSize()\n" + TAB + "{\n" + TAB + TAB + "return this.ochBlockSize;\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public int getSigSize()\n" + TAB + "{\n" + TAB + TAB + "return signature.length();\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public int getPageActivationDelay()\n" + TAB + "{\n" + TAB + TAB + "return " + ecuData.getPageActivationDelayVal() + ";\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public List<String> getPageValueWrites()\n" + TAB + "{\n" + TAB + TAB + "List<String> pageValueWrites = new ArrayList<String>();\n\n" + pageValueWriteOutput + "\n" + TAB + TAB
+                    + "return pageValueWrites;\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public List<String> getPageChunkWrites()\n" + TAB + "{\n" + TAB + TAB + "List<String> pageChunkWrites = new ArrayList<String>();\n\n" + pageChunkWriteOutput + "\n" + TAB + TAB
+                    + "return pageChunkWrites;\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public List<String> getPageIdentifiers()\n" + TAB + "{\n" + TAB + TAB + "List<String> pageIdentifiers = new ArrayList<String>();\n\n" + pageIdentifierOutput + "\n" + TAB + TAB
+                    + "return pageIdentifiers;\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public List<byte[]> getPageActivates()\n" + TAB + "{\n" + TAB + TAB + "List<byte[]> pageActivates = new ArrayList<byte[]>();\n\n" + pageActivateOutput + "\n" + TAB + TAB + "return pageActivates;\n" + TAB
+                    + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public int getInterWriteDelay()\n" + TAB + "{\n" + TAB + TAB + "return " + ecuData.getInterWriteDelay() + ";\n" + TAB + "}\n" + TAB + "@Override\n" + TAB + "public boolean isCRC32Protocol()\n" + TAB
+                    + "{\n" + TAB + TAB + "return " + ecuData.isCRC32Protocol() + ";\n" + TAB + "}\n" +
+
+                    TAB + "@Override\n" + TAB + "public int getCurrentTPS()\n" + TAB + "{\n";
+            if (ecuData.getRuntimeVars().containsKey("tpsADC"))
+            {
+                overrides += TAB + TAB + "return (int)tpsADC;\n";
+            }
+            else
+            {
+                overrides += TAB + TAB + "return 0;\n";
+            }
+
+            overrides += TAB + "}\n";
+            overrides += TAB + "@Override\n" + TAB + "public String[] defaultGauges()\n" + TAB + "{\n" + TAB + TAB + "return defaultGauges;\n" + TAB + "}\n";
+
+            writer.println(overrides);
         }
-
-        overrides += TAB + "}\n" +
-
-                TAB + "@Override\n" + TAB + "public String[] defaultGauges()\n" + TAB + "{\n" + TAB + TAB + "return defaultGauges;\n" + TAB
-                + "}\n";
-
-        writer.println(overrides);
-    }
 
     private static String processStringToBytes(ECUData ecuData, String s, int count, int pageNo) {
         String ret = "new byte[]{";
@@ -600,4 +638,31 @@ public class Output {
 
         writer.println("}");
     }
+
+
+    public static void outputControllerCommands(final ECUData ecuData, final PrintWriter writer)
+    {
+        writer.println(TAB + "@Override");
+        writer.println(TAB + "public void createControllerCommands()");
+        writer.println(TAB + "{");
+        writer.println(TAB + TAB + "controllerCommands.clear();");
+
+        for (final ControllerCommand command : ecuData.getControllerCommands())
+        {
+            final String name = command.getName();
+            final String controllerCommand = command.getCommand();
+
+            writer.println(TAB + TAB + String.format("controllerCommands.put(\"%s\", \"%s\");", name, controllerCommand));
+        }
+
+        writer.println(TAB + "}");
+
+        writer.println(TAB + "@Override");
+        writer.println(TAB + "public Map<String,String> getControllerCommands()");
+        writer.println(TAB + "{");
+        writer.println(TAB + TAB + "return controllerCommands;");
+        writer.println(TAB + "}");
+
+    }
+
 }

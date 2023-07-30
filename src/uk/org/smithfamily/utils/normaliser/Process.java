@@ -97,38 +97,8 @@ public class Process
 
             String name = line.substring(0,eqPos).trim();
             String parmsStr = line.substring(eqPos+1).trim();
-            List<String> parameters = Arrays.stream(parmsStr.split(","))
-                    .map(String::trim)
-                    .map(e-> e.replace("\"",""))
-                    .toList();
+            List<String> parameters = getParameters(line, parmsStr);
 
-            if(line.contains("{")) {
-                List<String> constructed = new ArrayList<>();
-                StringBuilder param= new StringBuilder();
-                int bc=0;
-                for(String p : parameters){
-                    if(!param.isEmpty()){
-                        param.append(", ");
-                    }
-                     param.append(p);
-                    if(p.contains("{")) {
-                        bc++;
-                    }
-
-                    if(p.contains("}")) {
-                        bc--;
-                    }
-                    if(bc==0) {
-                        constructed.add(param.toString().replace("{","(").replace("}",")"));
-
-                        param = new StringBuilder();
-                    }
-                }
-                parameters=constructed;
-
-
-
-            }
             String dataType = parameters.get(1);
 
             String offsetStr = parameters.get(2);
@@ -232,6 +202,40 @@ public class Process
         {
             System.out.println(line);
         }
+    }
+
+    private static List<String> getParameters(String line, String parmsStr) {
+        List<String> parameters = Arrays.stream(parmsStr.split(","))
+                .map(String::trim)
+                .map(e-> e.replace("\"",""))
+                .toList();
+
+        if(line.contains("{")) {
+            List<String> constructed = new ArrayList<>();
+            StringBuilder param= new StringBuilder();
+            int bc=0;
+            for(String p : parameters){
+                if(!param.isEmpty()){
+                    param.append(", ");
+                }
+                 param.append(p);
+                if(p.contains("{")) {
+                    bc++;
+                }
+
+                if(p.contains("}")) {
+                    bc--;
+                }
+                if(bc==0) {
+                    constructed.add(param.toString().replace("{","(").replace("}",")"));
+
+                    param = new StringBuilder();
+                }
+            }
+            parameters=constructed;
+
+        }
+        return parameters;
     }
 
     /**
@@ -395,75 +399,7 @@ public class Process
 
     }
 
-    /**
-     * Process the [Constants] section of the ini file
-     *
-     */
-    static void processConstants(ECUData ecuData, String line)
-    {
-        line = removeComments(line);
-        if (StringUtils.isEmpty(line)  || line.contains("unused"))
-        {
-            return;
-        }
-
-        if (line.contains("messageEnvelopeFormat"))
-        {
-            ecuData.setCRC32Protocol(line.contains("msEnvelope_1.0"));
-        }
-        Matcher pageM = Patterns.page.matcher(line);
-        if (pageM.matches())
-        {
-            ecuData.setCurrentPage(Integer.parseInt(pageM.group(1).trim()));
-            return;
-        }
-        Matcher pageSizesM = Patterns.pageSize.matcher(line);
-        if (pageSizesM.matches())
-        {
-            String values = StringUtils.remove(pageSizesM.group(1), ' ');
-            String[] list = values.split(",");
-            ecuData.setPageSizes(new ArrayList<>(Arrays.asList(list)));
-        }
-        Matcher pageIdentifersM = Patterns.pageIdentifier.matcher(line);
-        if (pageIdentifersM.matches())
-        {
-            String values = StringUtils.remove(pageIdentifersM.group(1), ' ');
-            values = StringUtils.remove(values, '"');
-            String[] list = values.split(",");
-            ecuData.setPageIdentifiers(new ArrayList<>(Arrays.asList(list)));
-        }
-
-        Matcher pageActivateM = Patterns.pageActivate.matcher(line);
-        if (pageActivateM.matches())
-        {
-            String values = StringUtils.remove(pageActivateM.group(1), ' ');
-            values = StringUtils.remove(values, '"');
-            String[] list = values.split(",");
-            ecuData.setPageActivateCommands(new ArrayList<>(Arrays.asList(list)));
-        }
-
-        Matcher pageReadCommandM = Patterns.pageReadCommand.matcher(line);
-        if (pageReadCommandM.matches())
-        {
-            String values = StringUtils.remove(pageReadCommandM.group(1), ' ');
-            values = StringUtils.remove(values, '"');
-            String[] list = values.split(",");
-            ecuData.setPageReadCommands(new ArrayList<>(Arrays.asList(list)));
-        }
-
-        Matcher interWriteDelayM = Patterns.interWriteDelay.matcher(line);
-        if (interWriteDelayM.matches())
-        {
-            ecuData.setInterWriteDelay(Integer.parseInt(interWriteDelayM.group(1).trim()));
-            return;
-        }
-        Matcher pageActivationDelayM = Patterns.pageActivationDelay.matcher(line);
-        if (pageActivationDelayM.matches())
-        {
-            ecuData.setPageActivationDelayVal(Integer.parseInt(pageActivationDelayM.group(1).trim()));
-            return;
-        }
-        // To allow for MS2GS27
+    public static void processPcVariables(ECUData ecuData, String line) {
         line = removeCurlyBrackets(line);
         Matcher bitsM = Patterns.bits.matcher(line);
         Matcher constantSimpleM = Patterns.constantSimple.matcher(line);
@@ -477,10 +413,7 @@ public class Process
             String name = line.substring(0,eqPos).trim();
             String parmsStr = line.substring(eqPos+1).trim();
 
-            List<String> parameters = Arrays.stream(parmsStr.split(","))
-                    .map(String::trim)
-                    .map(e-> e.replace("\"",""))
-                    .toList();
+            List<String> parameters = getParameters(line,parmsStr);
 
             String classtype =parameters.get(0);
             String type = parameters.get(1);
@@ -566,13 +499,194 @@ public class Process
             {
                 Constant c = new Constant(ecuData.getCurrentPage(), name, classtype, type, offset, shape, units, scale, translate,
                         lowText, highText, digits);
+
+                String nativeType=(scale < 1.0 ) ? "double":"int";
                 if (shape.contains("x"))
                 {
-                    ecuData.getConstantVars().put(name, "double[][]");
+                    ecuData.getConstantVars().put(name, nativeType+"[][]");
                 }
                 else
                 {
-                    ecuData.getConstantVars().put(name, "double[]");
+                    ecuData.getConstantVars().put(name, nativeType+"[]");
+                }
+                ecuData.getConstants().add(c);
+            }
+        }
+
+
+    }
+    static void processConstants(ECUData ecuData, String line)
+    {
+        line = removeComments(line);
+        if (StringUtils.isEmpty(line)  || line.contains("unused"))
+        {
+            return;
+        }
+
+        if (line.contains("messageEnvelopeFormat"))
+        {
+            ecuData.setCRC32Protocol(line.contains("msEnvelope_1.0"));
+        }
+        Matcher pageM = Patterns.page.matcher(line);
+        if (pageM.matches())
+        {
+            ecuData.setCurrentPage(Integer.parseInt(pageM.group(1).trim()));
+            return;
+        }
+        Matcher pageSizesM = Patterns.pageSize.matcher(line);
+        if (pageSizesM.matches())
+        {
+            String values = StringUtils.remove(pageSizesM.group(1), ' ');
+            String[] list = values.split(",");
+            ecuData.setPageSizes(new ArrayList<>(Arrays.asList(list)));
+        }
+        Matcher pageIdentifersM = Patterns.pageIdentifier.matcher(line);
+        if (pageIdentifersM.matches())
+        {
+            String values = StringUtils.remove(pageIdentifersM.group(1), ' ');
+            values = StringUtils.remove(values, '"');
+            String[] list = values.split(",");
+            ecuData.setPageIdentifiers(new ArrayList<>(Arrays.asList(list)));
+        }
+
+        Matcher pageActivateM = Patterns.pageActivate.matcher(line);
+        if (pageActivateM.matches())
+        {
+            String values = StringUtils.remove(pageActivateM.group(1), ' ');
+            values = StringUtils.remove(values, '"');
+            String[] list = values.split(",");
+            ecuData.setPageActivateCommands(new ArrayList<>(Arrays.asList(list)));
+        }
+
+        Matcher pageReadCommandM = Patterns.pageReadCommand.matcher(line);
+        if (pageReadCommandM.matches())
+        {
+            String values = StringUtils.remove(pageReadCommandM.group(1), ' ');
+            values = StringUtils.remove(values, '"');
+            String[] list = values.split(",");
+            ecuData.setPageReadCommands(new ArrayList<>(Arrays.asList(list)));
+        }
+
+        Matcher interWriteDelayM = Patterns.interWriteDelay.matcher(line);
+        if (interWriteDelayM.matches())
+        {
+            ecuData.setInterWriteDelay(Integer.parseInt(interWriteDelayM.group(1).trim()));
+            return;
+        }
+        Matcher pageActivationDelayM = Patterns.pageActivationDelay.matcher(line);
+        if (pageActivationDelayM.matches())
+        {
+            ecuData.setPageActivationDelayVal(Integer.parseInt(pageActivationDelayM.group(1).trim()));
+            return;
+        }
+        // To allow for MS2GS27
+        line = removeCurlyBrackets(line);
+        Matcher bitsM = Patterns.bits.matcher(line);
+        Matcher constantSimpleM = Patterns.constantSimple.matcher(line);
+        if (line.contains("scalar"))
+        {
+            //                      0       1           2       3               4       5       6       7           8
+            //      iacCLminValue = scalar, U08,      61,       "% / Steps", idleRes,   0.0,   0.0, idleResMax,    0 ; Minimum and maximum duty cycles when using closed loop idle
+
+            int eqPos = line.indexOf('=');
+
+            String name = line.substring(0,eqPos).trim();
+            String parmsStr = line.substring(eqPos+1).trim();
+
+            List<String> parameters = getParameters(line,parmsStr);
+
+            String classtype =parameters.get(0);
+            String type = parameters.get(1);
+
+            String offsetStr = parameters.get(2);
+            int offset = lastOffset;
+            try {
+                offset = Integer.parseInt(offsetStr);
+            }catch (NumberFormatException ignored){}
+            lastOffset=offset;
+            String units = parameters.get(3);
+            String scaleText = parameters.get(4);
+            String translateText = parameters.get(5);
+            String lowText = parameters.size() > 6 ? parameters.get(6) : "";
+            String highText = parameters.size() > 7 ? parameters.get(7) :"";
+            String digitsText = parameters.size() > 8 ? parameters.get(8):"";
+            double scale = !StringUtils.isEmpty(scaleText) ? safeDouble(scaleText) : 0;
+            double translate = !StringUtils.isEmpty(translateText) ? safeDouble(translateText) : 0;
+
+            int digits = !StringUtils.isEmpty(digitsText) ? (int) safeDouble(digitsText) : 0;
+
+            //noinspection SuspiciousMethodCalls
+            if (!ecuData.getConstants().contains(name))
+            {
+                Constant c = new Constant(ecuData.getCurrentPage(), name, classtype, type, offset, "", units, scale, translate,
+                        lowText, highText, digits);
+
+                if (scale == 1.0)
+                {
+                    ecuData.getConstantVars().put(name, "int");
+                }
+                else
+                {
+                    ecuData.getConstantVars().put(name, "double");
+                }
+                ecuData.getConstants().add(c);
+            }
+        }
+        else if (line.contains("array"))
+        {
+            //                  0       1       2       3   4   5 6   7   8   9
+            //algorithmLimits= array,   U16,   [8],   "", 1.0, 0, 0, 511, 0, noMsqSave
+            String[] components = line.split("=");
+            String name = components[0].trim();
+            List<String> parameters = Arrays.stream(components[1].split(","))
+                    .map(String::trim)
+                    .map(e-> e.replace("\"",""))
+                    .toList();
+
+            String classtype =parameters.get(0);
+            String type = parameters.get(1);
+
+
+
+
+            int idx = 2;
+            int offset = lastOffset;
+
+            String offsetStr = parameters.get(idx);
+            if (!offsetStr.contains("[")) {
+                try {
+                    offset = Integer.parseInt(offsetStr);
+                }catch (NumberFormatException ignored){}
+                idx++;
+            }
+            lastOffset=offset;
+
+            String shape = parameters.get(idx++);
+            String units = parameters.get(idx++);
+            String scaleText = parameters.get(idx++);
+            String translateText = parameters.get(idx++);
+            String lowText = parameters.get(idx++);
+            String highText = parameters.get(idx++);
+            String digitsText = parameters.size() > idx ? parameters.get(idx) :"";
+            highText = highText.replace("{", "").replace("}", "");
+            double scale = !StringUtils.isEmpty(scaleText) ? safeDouble(scaleText) : 0;
+            double translate = !StringUtils.isEmpty(translateText) ? safeDouble(translateText) : 0;
+
+            int digits = !StringUtils.isEmpty(digitsText) ? (int) safeDouble(digitsText) : 0;
+
+            //noinspection SuspiciousMethodCalls
+            if (!ecuData.getConstants().contains(name))
+            {
+                Constant c = new Constant(ecuData.getCurrentPage(), name, classtype, type, offset, shape, units, scale, translate,
+                        lowText, highText, digits);
+
+                if (shape.contains("x"))
+                {
+                    ecuData.getConstantVars().put(name, "int[][]");
+                }
+                else
+                {
+                    ecuData.getConstantVars().put(name, "int[]");
                 }
                 ecuData.getConstants().add(c);
             }
@@ -718,5 +832,6 @@ public class Process
             currentGroup.addOption(flagName, description);
         }
     }
+
 
 }

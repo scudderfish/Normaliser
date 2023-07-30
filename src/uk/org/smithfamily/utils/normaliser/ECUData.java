@@ -3,6 +3,7 @@ package uk.org.smithfamily.utils.normaliser;
 import uk.org.smithfamily.mslogger.ecuDef.Constant;
 import uk.org.smithfamily.mslogger.ecuDef.OutputChannel;
 import uk.org.smithfamily.mslogger.ecuDef.SettingGroup;
+import uk.org.smithfamily.utils.normaliser.controllercommand.ControllerCommand;
 
 import java.util.*;
 
@@ -40,6 +41,9 @@ public class ECUData
 	private int pageActivationDelayVal;
 	private String classSignature;
 	private ArrayList<SettingGroup> settingGroups;
+	private List<String> pageValueWrites;
+	private List<String> pageChunkWrites;
+	private List<ControllerCommand> controllerCommands;
 
 	public List<String> getRuntime()
 	{
@@ -87,6 +91,9 @@ public class ECUData
 		pageActivateCommands = new ArrayList<>();
 		pageIdentifiers = new ArrayList<>();
 		settingGroups = new ArrayList<>();
+		controllerCommands=new ArrayList<>();
+		pageValueWrites=new ArrayList<>();
+		pageChunkWrites=new ArrayList<>();
 		fingerprintSource = "";
 		currentPage = 0;
 		isCRC32Protocol = false;
@@ -308,5 +315,23 @@ public class ECUData
 
 	public Set<String> getInitalisedConstants() {
 		return initalisedConstants;
+	}
+
+
+    public List<String> getPageValueWrites() {
+        return pageValueWrites;
+    }
+
+
+	public List<String> getPageChunkWrites() {
+		return pageChunkWrites;
+	}
+
+	public List<ControllerCommand> getControllerCommands() {
+		return controllerCommands;
+	}
+
+	public void setControllerCommands(List<ControllerCommand> controllerCommands) {
+		this.controllerCommands = controllerCommands;
 	}
 }

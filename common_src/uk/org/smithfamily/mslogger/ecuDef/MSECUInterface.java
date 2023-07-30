@@ -59,18 +59,6 @@ public interface MSECUInterface
 
     boolean isCRC32Protocol();
 
-    void createTableEditors();
-
-    void createCurveEditors();
-
-    void createMenus();
-
-    void createDialogs();
-
-    void setUserDefinedVisibilityFlags();
-
-    void setMenuVisibilityFlags();
-
     String[] getControlFlags();
 
     void createSettingGroups();
@@ -87,4 +75,12 @@ public interface MSECUInterface
 
     String[] defaultGauges();
 
+
+    default double arrayValue(double[] a, int x) {
+        return a[x];
+    }
+
+    default int arrayValue(int[] a, int x) {
+        return a[x];
+    }
 }

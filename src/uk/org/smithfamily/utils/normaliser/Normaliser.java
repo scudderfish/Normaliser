@@ -110,6 +110,9 @@ public class Normaliser
 //            line = new String(convertedBytes.array(), StandardCharsets.UTF_8);
 
 
+            if(line.trim().startsWith(";")) {
+                continue;
+            }
             if(line.contains("AUX")|| line.contains("Alias")) {
                 continue;
             }
@@ -207,7 +210,7 @@ public class Normaliser
                 Process.processConstants(ecuData,line);
                 break;
             case PcVariables:
-                Process.processConstants(ecuData,line);
+                Process.processPcVariables(ecuData,line);
                 break;
             case ConstantsExtensions:
                 Process.processConstantsExtensions(ecuData,line);
@@ -270,7 +273,7 @@ public class Normaliser
         writer.println("public class " + className + " implements MSECUInterface, DataSource\n{");
         Output.declareVariables(ecuData,writer);
 
-        Output.outputConstructor(writer, className);
+        Output.outputConstructor(ecuData,writer, className);
 
         Output.initDefaultValues(ecuData,writer);
 
@@ -291,6 +294,8 @@ public class Normaliser
        Output.outputOverrides(ecuData,writer);
         Output.outputLoadConstants(ecuData,writer);
         Output.outputGlobalVars(ecuData,writer);
+        Output.outputControllerCommands(ecuData, writer);
+
         writer.println("\n}\n");
 
         writer.close();

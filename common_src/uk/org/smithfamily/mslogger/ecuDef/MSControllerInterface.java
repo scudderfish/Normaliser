@@ -1,33 +1,26 @@
 package uk.org.smithfamily.mslogger.ecuDef;
 
 public interface MSControllerInterface
-{
+{    void registerOutputChannel(OutputChannel o);
 
     boolean isSet(String string);
 
     byte[] loadPage(int i, int j, int k, byte[] bs, byte[] bs2);
 
-    double[] loadByteVector(byte[] pageBuffer, int i, int j, double d, double e, int k, boolean b);
+    int[] loadByteVector(byte[] pageBuffer, int offset, int width, double scale, double translate, double digits,  boolean signed);
 
-    double[][] loadByteArray(byte[] pageBuffer, int i, int j, int k, double d, double e, int l, boolean b);
+    int[][] loadByteArray(byte[] pageBuffer, int offset, int width, int height,double scale, double translate, double digits,  boolean signed);
 
-    double[] loadWordVector(byte[] pageBuffer, int i, int j, double d, double e, int k, boolean b);
+    int[] loadWordVector(byte[] pageBuffer, int offset, int width,double scale, double translate, double digits,  boolean signed);
 
-    @SuppressWarnings("unused")
-    double[][] loadWordArray(byte[] pageBuffer, int i, int j, int k, double d, double e, int l, boolean b);
+    int[][] loadWordArray(byte[] pageBuffer, int offset, int width, int height, double scale, double translate, double digits, boolean signed);
 
     double round(double x);
 
     int table(double x, String t);
 
-    default int arrayValue(int[] a, int x) {
-        return a[x];
-    }
-
-    int timeNow();
+    double timeNow();
 
     double tempCvt(double x);
-
-    void setImplementation(MSECUInterface i);
 
 }
